@@ -72,7 +72,7 @@ export const Navbar = () => {
               Hi user!
             </span>
             <div className="flex items-center gap-4">
-              <ThemeToggle size={7} />
+              <ThemeToggle />
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
