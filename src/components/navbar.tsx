@@ -1,5 +1,5 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "./ui/theme-toggle";
 import Link from "next/link";
 import Image from "next/image";
@@ -44,7 +44,6 @@ export const Navbar = () => {
             </Link>
           </motion.div>
 
-          {/* Search Section - 3fr */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -54,10 +53,23 @@ export const Navbar = () => {
             <div className="relative w-full max-w-2xl mx-auto">
               <input
                 type="text"
-                placeholder={`Search for ${searchWords[currentSearchWord]}`}
                 className="w-full px-4 py-2 rounded-full bg-white/50 dark:bg-black/50 border border-gray-200/20 dark:border-gray-800/20 backdrop-blur-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
               />
-              
+              <div className="absolute inset-0 flex items-center pointer-events-none px-4">
+                <span className="text-gray-400">Search for </span>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={searchWords[currentSearchWord]}
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -10, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-gray-400 ml-1"
+                  >
+                    {searchWords[currentSearchWord]}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
             </div>
           </motion.div>
 
