@@ -80,7 +80,14 @@ const config: Config = {
 	require('daisyui'),
 	addVariablesForColors
 ],
+
+daisyui: {
+  themes: [], // disable default themes from daisyui
+  darkTheme: "dark",
+  base: false, // stop daisyui from injecting base styles
+},
 };
+
 
 // This plugin adds each Tailwind color as a global CSS variable, e.g. var(--gray-200).
 function addVariablesForColors({ addBase, theme }: any) {

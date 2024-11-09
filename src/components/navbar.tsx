@@ -80,9 +80,18 @@ export const Navbar = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex items-center justify-end gap-6"
           >
-            <span className="text-sm font-medium text-gray-800 dark:text-white">
-              Hi user!
-            </span>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2"
+            >
+              <Link href="/auth/signin">
+                <span className="text-center font-medium">
+                  Sign In
+                </span>
+              </Link>
+            </motion.button>
+
             <div className="flex items-center gap-4">
               <ThemeToggle />
               <motion.button
