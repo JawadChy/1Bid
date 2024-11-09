@@ -1,4 +1,5 @@
 "use client";
+import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 interface ThemeToggleProps {
@@ -10,39 +11,30 @@ export const ThemeToggle = ({
   className = "",
   size = 7,
 }: ThemeToggleProps) => {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
 
+  // needed to prevent hydration mismatch
   useEffect(() => {
-    // check for system preference or stored preference
-    const storedTheme = localStorage.getItem("theme");
-    const systemPrefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-
-    const initialTheme = storedTheme || (systemPrefersDark ? "dark" : "light");
-    setTheme(initialTheme as "light" | "dark");
-    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+    setMounted(true);
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    document.documentElement.classList.toggle("dark");
-    localStorage.setItem("theme", newTheme);
-  };
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <label className={`swap swap-rotate ${className}`}>
       <input
         type="checkbox"
         checked={theme === "dark"}
-        onChange={toggleTheme}
+        onChange={() => setTheme(theme === "dark" ? "light" : "dark")}
         className="theme-controller"
       />
 
       {/* sun icon */}
       <svg
-        className={`swap-off h-7 w-7} fill-current`}
+        className={`swap-off h-${size} w-${size} fill-current`}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
       >
@@ -51,7 +43,7 @@ export const ThemeToggle = ({
 
       {/* moon icon */}
       <svg
-        className={`swap-on h-7 w-7 fill-current`}
+        className={`swap-on h-${size} w-${size} fill-current`}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
       >
