@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useState } from "react";
+import { signup } from "../actions";
 import {
   IconBrandGithub,
   IconBrandGoogle,
@@ -11,8 +13,26 @@ import {
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 
 export default function SignUp() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Get form element
+      const form = e.currentTarget;
+    
+      const formData = new FormData(form);
+
+      await signup(formData);
+      
+    } catch (error) {
+      console.error('Form submission error:', error);
+    } finally {
+      setLoading(false);
+    }
+
     console.log("Form submitted");
   };
 
@@ -33,28 +53,30 @@ export default function SignUp() {
         <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
           <LabelInputContainer>
             <Label htmlFor="firstname">First name</Label>
-            <Input id="firstname" placeholder="Barrack" type="text" />
+            <Input required name="firstname" id="firstname" placeholder="Barrack" type="text" />
           </LabelInputContainer>
           <LabelInputContainer>
             <Label htmlFor="lastname">Last name</Label>
-            <Input id="lastname" placeholder="Obama" type="text" />
+            <Input required name="lastname" id="lastname" placeholder="Obama" type="text" />
           </LabelInputContainer>
         </div>
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Email Address</Label>
-          <Input id="email" placeholder="potus@gmail.com" type="email" />
+          <Input required name="email" id="email" placeholder="potus@gmail.com" type="email" />
         </LabelInputContainer>
         <LabelInputContainer className="mb-4">
           <Label htmlFor="address">Address</Label>
-          <Input id="address" placeholder="1600 Pennsylvania Avenue NW, Washington, DC 20500" type="text" />
+          <Input required name="address" id="address" placeholder="1600 Pennsylvania Avenue NW, Washington, DC 20500" type="text" />
         </LabelInputContainer>
         <LabelInputContainer className="mb-4">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" placeholder="••••••••" type="password" />
+          <Input required name="password" id="password" placeholder="••••••••" type="password" />
         </LabelInputContainer>
         <LabelInputContainer className="mb-8">
           <Label htmlFor="confirmpassword">Confirm Password</Label>
           <Input
+            required
+            name="confirmpassword"
             id="confirmpassword"
             placeholder="••••••••"
             type="password"
@@ -64,8 +86,9 @@ export default function SignUp() {
         <button
           className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-9 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
           type="submit"
+          disabled={loading}
         >
-          Sign in &rarr;
+            {loading ? 'Signing up...' : 'Sign up →'}
           <BottomGradient />
         </button>
 
