@@ -2,7 +2,6 @@
 import { motion } from "framer-motion";
 import { AuroraBackground } from "../components/ui/aurora-background";
 import { FlipWords } from "@/components/ui/flip-words";
-import { ThemeToggle } from "../components/ui/theme-toggle";
 import { Navbar } from "@/components/navbar";
 
 export default function Home() {
