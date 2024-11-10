@@ -23,6 +23,8 @@ export const ThemeToggle = ({
     return null;
   }
 
+  {/* hard-coding size of svg for now, because it breaks randomly otherwise when using ${size} */}
+
   return (
     <label className={`swap swap-rotate ${className}`}>
       <input
@@ -34,7 +36,7 @@ export const ThemeToggle = ({
 
       {/* sun icon */}
       <svg
-        className={`swap-off h-${size} w-${size} fill-current`}
+        className={`swap-off h-7 w-7 fill-current`}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
       >
@@ -43,7 +45,7 @@ export const ThemeToggle = ({
 
       {/* moon icon */}
       <svg
-        className={`swap-on h-${size} w-${size} fill-current`}
+        className={`swap-on h-7 w-7 fill-current`}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
       >
