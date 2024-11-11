@@ -1,6 +1,6 @@
 'use server'
 
-// import { revalidatePath } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
@@ -23,9 +23,11 @@ export async function login(formData: FormData) {
   if (error) {
     redirect('/error')
   }
+  else {
+    revalidatePath('/', 'layout')
+    redirect('/')
+  }
 
-  // revalidatePath('/', 'layout')
-  // redirect('/')
 }
 
 export async function signup(formData: FormData) {
@@ -67,6 +69,8 @@ export async function signup(formData: FormData) {
       console.error('Profile Creation error:', profileError)
     }
 
-  // revalidatePath('/', 'layout')
-  // redirect('/')
+    // if (!error && !profileError) {
+    //   revalidatePath('/', 'layout')
+    //   redirect('/')
+    // }
 }

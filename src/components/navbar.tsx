@@ -6,6 +6,8 @@ import Image from "next/image";
 import bellIcon from "./icons/bell.svg";
 import cartIcon from "./icons/cart.svg";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from 'next/navigation';
 
 export const Navbar = () => {
   {
@@ -13,6 +15,36 @@ export const Navbar = () => {
   }
   const searchWords = ["anything!", "goods", "services"];
   const [currentSearchWord, setCurrentSearchWord] = useState(0);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+  const router = useRouter();
+
+  useEffect(() => {
+    // check initial auth state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -20,6 +52,38 @@ export const Navbar = () => {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  const AuthButton = () => {
+    if (!user) {
+      return (
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-2"
+        >
+          <Link href="/auth/signin">
+            <span className="text-center font-medium">
+              Sign In
+            </span>
+          </Link>
+        </motion.button>
+      );
+    }
+    else {
+      return (
+        <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="flex items-center gap-2"
+        onClick={handleSignOut}
+      >
+          <span className="text-center font-medium">
+            Sign Out
+          </span>
+      </motion.button>
+      )
+    }
+  }
 
   return (
     <nav className="fixed top-0 w-full z-50">
@@ -80,17 +144,7 @@ export const Navbar = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex items-center justify-end gap-6"
           >
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2"
-            >
-              <Link href="/auth/signin">
-                <span className="text-center font-medium">
-                  Sign In
-                </span>
-              </Link>
-            </motion.button>
+            <AuthButton />
 
             <div className="flex items-center gap-4">
               <ThemeToggle />
