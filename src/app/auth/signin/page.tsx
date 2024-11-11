@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -10,9 +10,22 @@ import { IconBrandGithub, IconBrandGoogle } from "@tabler/icons-react";
 import { login } from "../actions";
 
 export default function SignIn() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [loading, setLoading] = useState(false);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Form submitted");
+
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      
+      await login(formData);
+    } catch (error) {
+      console.error('Sign in error:', error);
+    } finally {
+      setLoading(false);
+    }
+
   };
   return (
     <div className="min-h-screen flex justify-center items-center">
@@ -31,9 +44,9 @@ export default function SignIn() {
           <button
             className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-9 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
             type="submit"
-            formAction={login}
+            disabled={loading}
           >
-            Sign in &rarr;
+            {loading ? 'Signing in...' : 'Sign in →'}
             <BottomGradient />
           </button>
 
