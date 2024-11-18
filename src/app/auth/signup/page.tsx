@@ -64,10 +64,10 @@ export default function SignUp() {
           <Label htmlFor="email">Email Address</Label>
           <Input required name="email" id="email" placeholder="potus@gmail.com" type="email" />
         </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
+        {/* <LabelInputContainer className="mb-4">
           <Label htmlFor="address">Address</Label>
           <Input required name="address" id="address" placeholder="1600 Pennsylvania Avenue NW, Washington, DC 20500" type="text" />
-        </LabelInputContainer>
+        </LabelInputContainer> */}
         <LabelInputContainer className="mb-4">
           <Label htmlFor="password">Password</Label>
           <Input required name="password" id="password" placeholder="••••••••" type="password" />
