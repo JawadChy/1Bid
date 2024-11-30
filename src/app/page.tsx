@@ -4,11 +4,69 @@ import { AuroraBackground } from "../components/ui/aurora-background";
 import { FlipWords } from "@/components/ui/flip-words";
 import { Navbar } from "@/components/navbar";
 import { BackgroundGradient } from "@/components/ui/background-gradient";
+import ItemCard from "@/components/ui/item-card";
 import Image from "next/image";
 
 export default function Home() {
   {/* someone think of more words pls :) -jawad*/}
   const words = ["bid", "listing"];
+
+
+  // mock listings
+
+  const topAuctionItems = [
+    // TODO: top viewed items on carousel
+    {
+      id: 1,
+      imageUrl: "https://i.ebayimg.com/images/g/rJ4AAOSw3FNj-Qtj/s-l400.jpg",
+      title: "Rare 1960s Omega Seamaster",
+      price: 3500,
+      bids: 12,
+      timeLeft: "2 days left",
+      views: 1500,
+      isAuction: true
+    },
+    {
+      id: 2,
+      imageUrl: "https://i.ebayimg.com/images/g/IIQAAOSw7QRkvt1K/s-l400.jpg",
+      title: "1967 Ford Mustang Fastback",
+      price: 75000,
+      bids: 25,
+      timeLeft: "5 days left",
+      views: 2500,
+      isAuction: true
+    },
+    {
+      id: 3,
+      imageUrl: "https://i.ebayimg.com/images/g/e~wAAOSwCzZkJvks/s-l400.png",
+      title: "Original Banksy Print",
+      price: 12000,
+      bids: 8,
+      timeLeft: "3 days left",
+      views: 1800,
+      isAuction: true
+    },
+    {
+      id: 4,
+      imageUrl: "https://i.ebayimg.com/images/g/oigAAOSw3yNkrsq9/s-l400.jpg",
+      title: "Chanel Classic Flap Bag",
+      price: 6500,
+      bids: 15,
+      timeLeft: "4 days left",
+      views: 2200,
+      isAuction: true
+    },
+    {
+      id: 5,
+      imageUrl: "https://i.ebayimg.com/images/g/z7kAAOSw6qhelIO-/s-l1600.webp",
+      title: "Signed Michael Jordan Jersey",
+      price: 15000,
+      bids: 20,
+      timeLeft: "6 days left",
+      views: 3000,
+      isAuction: true
+    }
+  ];
 
   return (
     <>
@@ -19,8 +77,8 @@ export default function Home() {
             initial={{ opacity: 0.0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{
-              delay: 0.3,
-              duration: 0.8,
+              delay: 0.1,
+              duration: 0.3,
               ease: "easeInOut",
             }}
             className="relative flex flex-col gap-4 items-center justify-center px-4"
@@ -38,130 +96,17 @@ export default function Home() {
           </motion.div>
         </AuroraBackground>
         <div className="flex flex-wrap justify-center gap-8 px-4 py-12">
-          {/* Component 1 */}
-          <BackgroundGradient className="rounded-[22px] max-w-sm h-[550px] p-4 sm:p-10 bg-white dark:bg-zinc-900">
-            <div className="relative w-full h-64 mb-16">
-              <Image
-                src="https://i.ebayimg.com/images/g/rJ4AAOSw3FNj-Qtj/s-l400.jpg"
-                alt="Vintage Watch"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <p className="text-base sm:text-xl text-black mt-4 mb-2 dark:text-neutral-200">
-              Rare 1960s Omega Seamaster
-            </p>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Pristine condition vintage Omega Seamaster with original box and papers. 
-              Automatic movement recently serviced. Current bid ends in 2 days.
-            </p>
-            <button className="rounded-full pl-4 pr-1 py-1 text-white flex items-center space-x-1 bg-black mt-4 text-xs font-bold dark:bg-zinc-800">
-              <span>Bid now </span>
-              <span className="bg-zinc-700 rounded-full text-[0.6rem] px-2 py-0 text-white">
-                $3,500
-              </span>
-            </button>
-          </BackgroundGradient>
-
-          {/* Component 2 */}
-          <BackgroundGradient className="rounded-[22px] max-w-sm h-[550px] p-4 sm:p-10 bg-white dark:bg-zinc-900">
-            <div className="relative w-full h-64 mb-16">
-              <Image
-                src="https://i.ebayimg.com/images/g/IIQAAOSw7QRkvt1K/s-l400.jpg"
-                alt="Classic Car"
-                fill
-                className="object-cover rounded-2xl"
-              />
-            </div>
-            <p className="text-base sm:text-xl text-black mt-4 mb-2 dark:text-neutral-200">
-              1967 Ford Mustang Fastback
-            </p>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Fully restored classic Mustang in Highland Green. Numbers matching,
-              documented history. Reserve not met. Auction ends in 5 days.
-            </p>
-            <button className="rounded-full pl-4 pr-1 py-1 text-white flex items-center space-x-1 bg-black mt-4 text-xs font-bold dark:bg-zinc-800">
-              <span>Bid now </span>
-              <span className="bg-zinc-700 rounded-full text-[0.6rem] px-2 py-0 text-white">
-                $75,000
-              </span>
-            </button>
-          </BackgroundGradient>
-
-          {/* Component 3 */}
-          <BackgroundGradient className="rounded-[22px] max-w-sm h-[550px] p-4 sm:p-10 bg-white dark:bg-zinc-900">
-            <div className="relative w-full h-64 mb-16">
-              <Image
-                src="https://i.ebayimg.com/images/g/e~wAAOSwCzZkJvks/s-l400.png"
-                alt="Contemporary Art"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <p className="text-base sm:text-xl text-black mt-4 mb-2 dark:text-neutral-200">
-              Original Banksy Print
-            </p>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Authenticated Banksy print from 2008 limited edition run. 
-              Includes certificate of authenticity. Live auction starts in 3 days.
-            </p>
-            <button className="rounded-full pl-4 pr-1 py-1 text-white flex items-center space-x-1 bg-black mt-4 text-xs font-bold dark:bg-zinc-800">
-              <span>Bid now </span>
-              <span className="bg-zinc-700 rounded-full text-[0.6rem] px-2 py-0 text-white">
-                $12,000
-              </span>
-            </button>
-          </BackgroundGradient>
-
-          {/* Component 4 */}
-          <BackgroundGradient className="rounded-[22px] max-w-sm h-[550px] p-4 sm:p-10 bg-white dark:bg-zinc-900">
-            <div className="relative w-full h-64 mb-16">
-              <Image
-                src="https://i.ebayimg.com/images/g/oigAAOSw3yNkrsq9/s-l400.jpg"
-                alt="Luxury Handbag"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <p className="text-base sm:text-xl text-black mt-4 mb-2 dark:text-neutral-200">
-              Chanel Classic Flap Bag
-            </p>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Timeless Chanel handbag in caviar leather with gold-tone hardware.
-              Comes with dust bag and authenticity card. Auction ends in 4 days.
-            </p>
-            <button className="rounded-full pl-4 pr-1 py-1 text-white flex items-center space-x-1 bg-black mt-4 text-xs font-bold dark:bg-zinc-800">
-              <span>Bid now </span>
-              <span className="bg-zinc-700 rounded-full text-[0.6rem] px-2 py-0 text-white">
-                $6,500
-              </span>
-            </button>
-          </BackgroundGradient>
-
-          {/* Component 5 */}
-          <BackgroundGradient className="rounded-[22px] max-w-sm h-[550px] p-4 sm:p-10 bg-white dark:bg-zinc-900">
-            <div className="relative w-full h-64 mb-16">
-              <Image
-                src="https://i.ebayimg.com/images/g/z7kAAOSw6qhelIO-/s-l1600.webp"
-                alt="Sports Memorabilia"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <p className="text-base sm:text-xl text-black mt-4 mb-2 dark:text-neutral-200">
-              Signed Michael Jordan Jersey
-            </p>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Authentic Michael Jordan jersey from his 1997 championship season, 
-              signed and framed. Includes COA. Current bid ends in 6 days.
-            </p>
-            <button className="rounded-full pl-4 pr-1 py-1 text-white flex items-center space-x-1 bg-black mt-4 text-xs font-bold dark:bg-zinc-800">
-              <span>Bid now </span>
-              <span className="bg-zinc-700 rounded-full text-[0.6rem] px-2 py-0 text-white">
-                $15,000
-              </span>
-            </button>
-          </BackgroundGradient>
+        {topAuctionItems.map((item) => (
+            <ItemCard
+              key={item.id}
+              imageUrl={item.imageUrl}
+              title={item.title}
+              price={item.price}
+              isAuction={item.isAuction}
+              bids={item.bids}
+              timeLeft={item.timeLeft}
+            />
+          ))}
         </div>
       </div>
     </>

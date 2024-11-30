@@ -104,7 +104,7 @@ export const Navbar = () => {
       <motion.div
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.3 }}
         className="hidden md:flex w-full bg-white/40 dark:bg-black/40 backdrop-blur-md border-b border-gray-200/20 dark:border-gray-800/20"
       >
         <div className="w-full max-w-7xl mx-auto px-4 py-4 grid grid-cols-5 gap-4 items-center">
