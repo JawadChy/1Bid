@@ -6,6 +6,7 @@ import { Navbar } from "@/components/navbar";
 import { BackgroundGradient } from "@/components/ui/background-gradient";
 import ItemCard from "@/components/ui/item-card";
 import Image from "next/image";
+import { TopAuctionCarousel, TopBuyNowCarousel } from "@/components/item-carousels";
 
 export default function Home() {
   {/* someone think of more words pls :) -jawad*/}
@@ -14,7 +15,7 @@ export default function Home() {
 
   // mock listings
 
-  const topAuctionItems = [
+  const mockItems = [
     // TODO: top viewed items on carousel
     {
       id: 1,
@@ -95,18 +96,9 @@ export default function Home() {
             </div>
           </motion.div>
         </AuroraBackground>
-        <div className="flex flex-wrap justify-center gap-8 px-4 py-12">
-        {topAuctionItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              imageUrl={item.imageUrl}
-              title={item.title}
-              price={item.price}
-              isAuction={item.isAuction}
-              bids={item.bids}
-              timeLeft={item.timeLeft}
-            />
-          ))}
+        <div className="space-y-16 py-12">
+          <TopAuctionCarousel items={mockItems} />
+          <TopBuyNowCarousel items={mockItems} />
         </div>
       </div>
     </>
