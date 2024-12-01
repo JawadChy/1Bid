@@ -32,8 +32,6 @@ export const Navbar = () => {
 
   // }, [searchQuery]);
 
-
-
   useEffect(() => {
     // check initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {

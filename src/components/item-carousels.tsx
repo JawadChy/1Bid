@@ -32,7 +32,6 @@ export function TopAuctionCarousel({ items }: CarouselProps) {
         <Carousel
           opts={{
             align: "start",
-            loop: true,
           }}
           className="w-full"
         >
@@ -51,8 +50,8 @@ export function TopAuctionCarousel({ items }: CarouselProps) {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-0" />
-          <CarouselNext className="right-0" />
+          <CarouselPrevious/>
+          <CarouselNext />
         </Carousel>
       </div>
     );
@@ -67,7 +66,6 @@ export function TopAuctionCarousel({ items }: CarouselProps) {
         <Carousel
           opts={{
             align: "start",
-            loop: true,
           }}
           className="w-full"
         >
@@ -85,8 +83,8 @@ export function TopAuctionCarousel({ items }: CarouselProps) {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-0" />
-          <CarouselNext className="right-0" />
+          <CarouselPrevious  />
+          <CarouselNext />
         </Carousel>
       </div>
     );
