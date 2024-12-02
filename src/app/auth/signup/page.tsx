@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useState } from "react";
 import { signup } from "../actions";
-import {
-  IconBrandGithub,
-  IconBrandGoogle,
-} from "@tabler/icons-react";
+// import {
+//   IconBrandGithub,
+//   IconBrandGoogle,
+// } from "@tabler/icons-react";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 
 export default function SignUp() {

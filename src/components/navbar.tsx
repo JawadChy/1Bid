@@ -8,6 +8,7 @@ import cartIcon from "./icons/cart.svg";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from 'next/navigation';
+import { AuthButton } from "./ui/auth-button";
 
 export const Navbar = () => {
   {
@@ -33,6 +34,7 @@ export const Navbar = () => {
   // }, [searchQuery]);
 
   useEffect(() => {
+    console.log("navbar useEffect running");
     // check initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -43,11 +45,17 @@ export const Navbar = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("auth state changed:", _event, session?.user?.id);
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("navbar useEffect cleanup");
+      subscription.unsubscribe();
+    }
   }, []);
+
+  console.log("Navbar render:", user?.id, loading);
 
   const handleSignOut = async () => {
     try {
@@ -64,38 +72,6 @@ export const Navbar = () => {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
-
-  const AuthButton = () => {
-    if (!user) {
-      return (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-2"
-        >
-          <Link href="/auth/signin">
-            <span className="text-center font-medium">
-              Sign In
-            </span>
-          </Link>
-        </motion.button>
-      );
-    }
-    else {
-      return (
-        <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="flex items-center gap-2"
-        onClick={handleSignOut}
-      >
-          <span className="text-center font-medium">
-            Sign Out
-          </span>
-      </motion.button>
-      )
-    }
-  }
 
   return (
     <nav className="fixed top-0 w-full z-50">
@@ -169,7 +145,7 @@ export const Navbar = () => {
           >
             <AuthButton />
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-[120px]">
               <ThemeToggle />
               <motion.button
                 whileHover={{ scale: 1.05 }}
