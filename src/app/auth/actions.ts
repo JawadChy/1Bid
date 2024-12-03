@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server'
 // const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function login(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
