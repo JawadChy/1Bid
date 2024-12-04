@@ -1,4 +1,3 @@
-// app/api/listings/create/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
@@ -14,7 +13,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user's profile
+    // get user's profile
     const { data: profile, error: profileError } = await supabase
       .from('profile')
       .select('role, is_suspended')
@@ -35,6 +34,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // deny user from posting listing if not approp role -> TODO: TEMP ALLOWING S TO POST, BUT THEY SHOULDN'T BE ABLE TO IN PROD
     if (profile.role !== 'U' && profile.role !== 'S') {
       return NextResponse.json(
         { error: 'Only users can create listings' },
@@ -43,8 +43,38 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
+
+    // files
+    const files = formData.getAll('files') as File[]
+    const imageUrls: string[] = []
+
+    console.log(files);
+    // upload each file one by one, and get url
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${crypto.randomUUID()}.${fileExt}`
+        const filePath = `${user.id}/${fileName}`
+  
+        const { error: uploadError, data } = await supabase.storage
+          .from('listing_images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          })
+  
+        if (uploadError) {
+          console.error('File upload error:', uploadError)
+          return NextResponse.json(
+            { error: 'Failed to upload images' },
+            { status: 500 }
+          )
+        }
+  
+        imageUrls.push(filePath)
+      }
     
-    // Validate required fields
+    // validate other required fields
     const title = formData.get('title')
     const description = formData.get('description')
     const category = formData.get('category')
@@ -57,7 +87,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create the main listing
+    // (MAIN)listing table row
     const { data: listing, error: listingError } = await supabase
       .from('listing')
       .insert({
@@ -72,6 +102,12 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (listingError) {
+      // clean up stored files
+      await Promise.all(
+        imageUrls.map(url => 
+          supabase.storage.from('listing_images').remove([url])
+        )
+      )
       console.error('Listing creation error:', listingError)
       return NextResponse.json(
         { error: 'Failed to create listing' },
@@ -79,11 +115,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Handle listing type specific data
+    if (imageUrls.length > 0) {
+        const { error: imageError } = await supabase
+          .from('listing_image')
+          .insert(
+            imageUrls.map((url, index) => ({
+              listing_id: listing.id,
+              storage_path: url,
+              position: index
+            }))
+          )
+  
+        if (imageError) {
+          // rollback if err
+          await supabase.from('listing').delete().eq('id', listing.id)
+          await Promise.all(
+            imageUrls.map(url => 
+              supabase.storage.from('listing_images').remove([url])
+            )
+          )
+          return NextResponse.json(
+            { error: 'Failed to store image references' },
+            { status: 500 }
+          )
+        }
+      }
+
+    // insert into either bid or now table
     if (listingType === 'BUY_NOW') {
       const askingPrice = formData.get('askingPrice')
       if (!askingPrice) {
-        // Rollback main listing
+        // rollback MAIN
         await supabase.from('listing').delete().eq('id', listing.id)
         return NextResponse.json(
           { error: 'Asking price is required for buy now listings' },
@@ -102,7 +164,7 @@ export async function POST(request: NextRequest) {
         })
 
       if (buyNowError) {
-        // Rollback main listing
+        // rollback
         await supabase.from('listing').delete().eq('id', listing.id)
         console.error('Buy now listing error:', buyNowError)
         return NextResponse.json(
@@ -117,7 +179,7 @@ export async function POST(request: NextRequest) {
       const minBidIncrement = formData.get('minBidIncrement')
 
       if (!startingPrice || !endTime) {
-        // Rollback main listing
+        // rollback
         await supabase.from('listing').delete().eq('id', listing.id)
         return NextResponse.json(
           { error: 'Starting price and end time are required for bid listings' },
@@ -137,7 +199,7 @@ export async function POST(request: NextRequest) {
         })
 
       if (bidError) {
-        // Rollback main listing
+        // rollback
         await supabase.from('listing').delete().eq('id', listing.id)
         console.error('Bid listing error:', bidError)
         return NextResponse.json(
@@ -152,7 +214,8 @@ export async function POST(request: NextRequest) {
       listing: {
         id: listing.id,
         title: listing.title,
-        type: listingType
+        type: listingType,
+        images: imageUrls
       }
     })
 
