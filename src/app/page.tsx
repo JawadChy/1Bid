@@ -3,15 +3,11 @@ import { motion } from "framer-motion";
 import { AuroraBackground } from "../components/ui/aurora-background";
 import { FlipWords } from "@/components/ui/flip-words";
 import { Navbar } from "@/components/navbar";
-import { BackgroundGradient } from "@/components/ui/background-gradient";
-import ItemCard from "@/components/ui/item-card";
-import Image from "next/image";
 import { TopAuctionCarousel, TopBuyNowCarousel } from "@/components/item-carousels";
 
 export default function Home() {
   {/* someone think of more words pls :) -jawad*/}
   const words = ["bid", "listing"];
-
 
   // mock listings
 
