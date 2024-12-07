@@ -5,10 +5,21 @@ import Link from "next/link";
 import Image from "next/image";
 import bellIcon from "./icons/bell.svg";
 import cartIcon from "./icons/cart.svg";
+import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { AuthButton } from "./ui/auth-button";
+
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Navbar = () => {
   {
@@ -16,17 +27,18 @@ export const Navbar = () => {
   }
   const searchWords = ["anything!", "goods", "services"];
   const [currentSearchWord, setCurrentSearchWord] = useState(0);
+
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [category, setCategory] = useState("all");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-
 
   // useEffect(() => {
   //   console.log(`${searchQuery} is what current query is`)
@@ -52,7 +64,7 @@ export const Navbar = () => {
     return () => {
       console.log("navbar useEffect cleanup");
       subscription.unsubscribe();
-    }
+    };
   }, []);
 
   console.log("Navbar render:", user?.id, loading);
@@ -60,9 +72,9 @@ export const Navbar = () => {
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      router.push('/');
+      router.push("/");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -102,37 +114,51 @@ export const Navbar = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="col-span-3 px-4"
           >
-            <div className="relative w-full max-w-2xl mx-auto">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="w-full px-4 py-2 rounded-full bg-white/50 dark:bg-black/50 border border-gray-200/20 dark:border-gray-800/20 backdrop-blur-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-              />
-              <div className="absolute inset-0 flex items-center pointer-events-none px-4">
-                {searchQuery ? (
-                  <>
-                  </>
-                ) : 
-                (
-                  <>
-                  <span className="text-gray-400">Search for </span>
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={searchWords[currentSearchWord]}
-                      initial={{ y: 10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -10, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="text-gray-400 ml-1"
-                    >
-                      {searchWords[currentSearchWord]}
-                    </motion.span>
-                  </AnimatePresence>
-                  </>
-
-                )}
+            <div className="relative w-full max-w-2xl mx-auto flex items-stretch">
+              <div className="flex-grow relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full h-11 px-4 py-2 rounded-l-full rounded-r-none bg-white dark:bg-black border-2 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-all"
+                />
+                <div className="absolute inset-0 flex items-center pointer-events-none px-4">
+                  {searchQuery ? (
+                    <></>
+                  ) : (
+                    <>
+                      <span className="text-gray-400">Search for </span>
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={searchWords[currentSearchWord]}
+                          initial={{ y: 10, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          exit={{ y: -10, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="text-gray-400 ml-1"
+                        >
+                          {searchWords[currentSearchWord]}
+                        </motion.span>
+                      </AnimatePresence>
+                    </>
+                  )}
+                </div>
               </div>
+              <Select defaultValue="all">
+                <SelectTrigger className="h-11 w-32 md:w-40 rounded-l-none rounded-r-full border-2 border-l-0 border-gray-300 dark:border-gray-700 bg-white dark:bg-black">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="electronics">Electronics</SelectItem>
+                  <SelectItem value="vg_cons">Gaming</SelectItem>
+                  <SelectItem value="fashion">Fashion</SelectItem>
+                  <SelectItem value="toys">Toys</SelectItem>
+                  <SelectItem value="books">Books</SelectItem>
+                  <SelectItem value="home">Home & Garden</SelectItem>
+                  <SelectItem value="services">Services</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </motion.div>
 
