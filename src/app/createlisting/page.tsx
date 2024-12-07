@@ -175,7 +175,9 @@ export default function CreateListing() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="electronics">Electronics</SelectItem>
-                  <SelectItem value="clothing">Clothing</SelectItem>
+                  <SelectItem value="vg_cons">Video Games and Consoles</SelectItem>
+                  <SelectItem value="fashion">Fashion</SelectItem>
+                  <SelectItem value="toys">Toys</SelectItem>
                   <SelectItem value="books">Books</SelectItem>
                   <SelectItem value="home">Home & Garden</SelectItem>
                   <SelectItem value="services">Services</SelectItem>
