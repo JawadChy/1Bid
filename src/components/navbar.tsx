@@ -6,6 +6,7 @@ import Image from "next/image";
 import bellIcon from "./icons/bell.svg";
 import cartIcon from "./icons/cart.svg";
 import { Search } from "lucide-react";
+
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -36,14 +37,19 @@ export const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      const searchParams = new URLSearchParams();
+      searchParams.set('query', searchQuery.trim());
+      searchParams.set('category', category);
+      router.push(`/search?${searchParams.toString()}`);
+    }
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-
-  // useEffect(() => {
-  //   console.log(`${searchQuery} is what current query is`)
-
-  // }, [searchQuery]);
 
   useEffect(() => {
     console.log("navbar useEffect running");
@@ -114,7 +120,7 @@ export const Navbar = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="col-span-3 px-4"
           >
-            <div className="relative w-full max-w-2xl mx-auto flex items-stretch">
+            <form onSubmit={handleSearch} className="relative w-full max-w-2xl mx-auto flex items-stretch">
               <div className="flex-grow relative">
                 <input
                   type="text"
@@ -144,7 +150,7 @@ export const Navbar = () => {
                   )}
                 </div>
               </div>
-              <Select defaultValue="all">
+              <Select defaultValue="all" onValueChange={(value) => setCategory(value)}>
                 <SelectTrigger className="h-11 w-32 md:w-40 rounded-l-none rounded-r-full border-2 border-l-0 border-gray-300 dark:border-gray-700 bg-white dark:bg-black">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
@@ -159,7 +165,7 @@ export const Navbar = () => {
                   <SelectItem value="services">Services</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </form>
           </motion.div>
 
           {/* User Section - 1fr */}
