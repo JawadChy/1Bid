@@ -9,6 +9,12 @@ const nextConfig = {
         pathname: "/images/**",
         search: "",
       },
+      {
+        protocol: "https",
+        hostname: process.env.NEXT_PUBLIC_SUPABASE_URL.replace('https://', ''),
+        port: "",
+        pathname: "/storage/**",
+      },
     ],
   },
 };
