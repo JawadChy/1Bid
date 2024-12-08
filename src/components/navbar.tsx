@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { AuthButton } from "./ui/auth-button";
+import { useSearchParams } from "next/navigation";
 
 import {
   Select,
@@ -22,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const Navbar = () => {
+export const Navbar = ({ animated = true }: { animated?: boolean }) => {
   {
     /* add some other shit here too, i'm not good at being creative */
   }
@@ -36,6 +37,8 @@ export const Navbar = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
+
+  const searchParams = useSearchParams();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +76,25 @@ export const Navbar = () => {
     };
   }, []);
 
+  const navAnimation = animated ? {
+    initial: { y: -100 },
+    animate: { y: 0 },
+    transition: { duration: 0.3 }
+  } : {
+    initial: { y: 0 },
+    animate: { y: 0 }
+  };
+
+  const fadeInAnimation = animated ? {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: 0.5, delay: 0.2 }
+  } : {
+    initial: { opacity: 1 },
+    animate: { opacity: 1 }
+  };
+
+
   console.log("Navbar render:", user?.id, loading);
 
   const handleSignOut = async () => {
@@ -94,17 +116,13 @@ export const Navbar = () => {
   return (
     <nav className="fixed top-0 w-full z-50">
       <motion.div
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.3 }}
+        {...navAnimation}
         className="hidden md:flex w-full bg-white/40 dark:bg-black/40 backdrop-blur-md border-b border-gray-200/20 dark:border-gray-800/20"
       >
         <div className="w-full max-w-7xl mx-auto px-4 py-4 grid grid-cols-5 gap-4 items-center">
           {/* Logo Section - 1fr */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            {...fadeInAnimation}
             className="flex justify-start items-center"
           >
             <Link href="/">
@@ -115,9 +133,7 @@ export const Navbar = () => {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            {...fadeInAnimation}
             className="col-span-3 px-4"
           >
             <form onSubmit={handleSearch} className="relative w-full max-w-2xl mx-auto flex items-stretch">
@@ -170,9 +186,7 @@ export const Navbar = () => {
 
           {/* User Section - 1fr */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            {...fadeInAnimation}
             className="flex items-center justify-end gap-6"
           >
             <AuthButton />
