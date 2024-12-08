@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -20,13 +20,46 @@ import ItemCard from '@/components/ui/item-card';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 
+type Listing = {
+  id: string;
+  title: string;
+  price: number;
+  listing_type: 'BID' | 'BUY_NOW';
+  end_time?: string;
+  curr_bid_amt?: number;
+  images: string[];
+  listing_image: { public_url: string; position: number; }[];
+  bid_listing?: [{
+    starting_price: number;
+    end_time: string;
+    curr_bid_amt?: number;
+  }];
+  buy_now_listing?: [{
+    asking_price: number;
+  }];
+};
+
+type TransformedListing = {
+  id: string;
+  imageUrl: string;
+  title: string;
+  isAuction: boolean;
+  price: number;
+  timeLeft?: string;
+};
+
 export default function SearchPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
   const query = searchParams.get('query') || '';
   const category = searchParams.get('category') || 'all';
   const sort = searchParams.get('sort') || 'relevance';
+
+  const [listings, setListings] = useState<TransformedListing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // flter states
   const [listingType, setListingType] = useState(searchParams.get('listingType') || 'all');
@@ -35,66 +68,83 @@ export default function SearchPage() {
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
   const [forRent, setForRent] = useState(searchParams.get('forRent') === 'true');
   
-  const createQueryString = useCallback(
-    (name: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set(name, value);
-      return params.toString();
-    },
-    [searchParams]
-  );
+  const createQueryString = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '' || value === 'all') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    
+    return params.toString();
+  }, [searchParams]);
 
   const handleSortChange = (value: string) => {
-    router.push(pathname + '?' + createQueryString('sort', value));
+    router.push(`${pathname}?${createQueryString({ sort: value })}`);
   };
 
   const handleApplyFilters = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    // any filters empty or def = delete param
-
-    if (listingType === 'all') {
-      params.delete('listingType');
-    } else {
-      params.set('listingType', listingType);
-    }
-    
-    if (itemType === 'all') {
-      params.delete('itemType');
-    } else {
-      params.set('itemType', itemType);
-    }
-    
-    if (minPrice.trim()) {
-      params.set('minPrice', minPrice);
-    } else {
-      params.delete('minPrice');
-    }
-    
-    if (maxPrice.trim()) {
-      params.set('maxPrice', maxPrice);
-    } else {
-      params.delete('maxPrice');
-    }
-    
-    if (!forRent) {
-      params.delete('forRent');
-    } else {
-      params.set('forRent', forRent.toString());
-    }
-    
-    router.push(pathname + '?' + params.toString());
+    router.push(`${pathname}?${createQueryString({
+      listingType,
+      itemType,
+      minPrice: minPrice.trim(),
+      maxPrice: maxPrice.trim(),
+      forRent: forRent ? 'true' : null
+    })}`);
   };
 
-  // Temporary dummy data
-  const dummyItems = Array(9).fill({
-    imageUrl: "https://i.ebayimg.com/images/g/rJ4AAOSw3FNj-Qtj/s-l400.jpg",
-    title: "Sample Item",
-    isAuction: true,
-    price: 99.99,
-    bids: 5,
-    timeLeft: "1d 2h"
-  });
+  useEffect(() => {
+    const fetchListings = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const response = await fetch(`/api/listings/search?${searchParams.toString()}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch listings');
+        }
+        
+        const data = await response.json();
+        
+        // Transform the data for ItemCard
+        const transformedListings = data.listings.map((listing: Listing): TransformedListing => {
+          const imageUrl = listing.listing_image?.[0]?.public_url
+                          
+          const price = listing.listing_type === 'BID'
+            ? listing.bid_listing?.[0]?.curr_bid_amt || 
+              listing.bid_listing?.[0]?.starting_price ||
+              listing.price
+            : listing.buy_now_listing?.[0]?.asking_price ||
+              listing.price;
+              
+          const timeLeft = listing.bid_listing?.[0]?.end_time
+            ? new Date(listing.bid_listing[0].end_time).toLocaleString()
+            : undefined;
+            
+          return {
+            id: listing.id,
+            imageUrl,
+            title: listing.title,
+            isAuction: listing.listing_type === 'BID',
+            price,
+            timeLeft
+          };
+        });
+        
+        setListings(transformedListings);
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+        setError('Failed to load listings. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, [searchParams]);
 
   return (
     <>
@@ -102,7 +152,7 @@ export default function SearchPage() {
       <div className="min-h-screen pt-24 px-4 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-semibold">
-            Search Results for: "{query}"
+            Search Results for "{query}"
             {category !== 'all' && ` in ${category}`}
           </h1>
           
@@ -232,11 +282,37 @@ export default function SearchPage() {
 
           {/* Results Grid */}
           <div className="flex-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {dummyItems.map((item, index) => (
-                <ItemCard key={index} {...item} />
-              ))}
-            </div>
+            {error ? (
+              <div className="text-red-500 text-center py-8">{error}</div>
+            ) : loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="w-full aspect-square bg-gray-200 dark:bg-gray-800 rounded-3xl" />
+                    <div className="mt-4 h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
+                    <div className="mt-2 h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : listings.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No listings found matching your criteria
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {listings.map((item) => (
+                  <ItemCard 
+                    key={item.id} 
+                    id={item.id}
+                    imageUrl={item.imageUrl}
+                    title={item.title}
+                    isAuction={item.isAuction}
+                    price={item.price}
+                    timeLeft={item.timeLeft}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
         </div>

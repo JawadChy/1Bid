@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Clock } from "lucide-react";
 
 interface ItemCardProps {
+  id: string;
   imageUrl: string;
   title: string;
   // having description just makes the card too big, ebay doesn't have description so i'm just not gonna add it.
@@ -9,10 +10,11 @@ interface ItemCardProps {
   isAuction: boolean;
   price: number;
   bids?: number;
-  timeLeft: string;
+  timeLeft?: string;
 }
 
 export default function ItemCard({
+  id,
   imageUrl,
   title,
   // description,
@@ -36,9 +38,9 @@ export default function ItemCard({
         <h3 className="text-xl font-semibold text-black dark:text-white mb-2">
           {title}
         </h3>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-          {/* {description} */}
-        </p>
+        {/* <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+          {description}
+        </p> */}
         <div className="flex justify-between items-center">
           <div className="space-y-1">
             <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
