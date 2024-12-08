@@ -24,10 +24,11 @@ export default function ItemCard({
   timeLeft,
 }: ItemCardProps) {
   return (
-    <div className="w-[384px] rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-zinc-900">
+    <div className="w-[360px] rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-zinc-900">
       <div className=" rounded-3xl w-full aspect-square relative bg-slate-100	dark:bg-zinc-950">
         <Image
           src={imageUrl}
+          sizes="360px"
           alt={title}
           fill
           className="rounded-3xl object-cover"
