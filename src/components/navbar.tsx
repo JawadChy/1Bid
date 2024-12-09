@@ -95,7 +95,6 @@ export const Navbar = ({ animated = true }: { animated?: boolean }) => {
   };
 
 
-  console.log("Navbar render:", user?.id, loading);
 
   const handleSignOut = async () => {
     try {
