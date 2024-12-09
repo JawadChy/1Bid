@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import ItemCard from '@/components/ui/item-card';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 type Listing = {
   id: string;
@@ -301,15 +302,16 @@ export default function SearchPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {listings.map((item) => (
-                  <ItemCard 
-                    key={item.id} 
-                    id={item.id}
-                    imageUrl={item.imageUrl}
-                    title={item.title}
-                    isAuction={item.isAuction}
-                    price={item.price}
-                    timeLeft={item.timeLeft}
-                  />
+                  <Link href={`/listing?id=${item.id}`}>
+                      <ItemCard 
+                        id={item.id} 
+                        imageUrl={item.imageUrl}
+                        title={item.title}
+                        isAuction={item.isAuction}
+                        price={item.price}
+                        timeLeft={item.timeLeft}
+                      />
+                  </Link>
                 ))}
               </div>
             )}
