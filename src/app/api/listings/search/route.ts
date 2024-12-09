@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
   const forRent = searchParams.get('forRent')
   if (forRent !== null) {
-    query = query.eq('for_rent', forRent === 'true')
+    query = query.eq('rent', forRent === 'true')
   }
 
   const minPrice = searchParams.get('minPrice')
