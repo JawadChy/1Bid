@@ -14,78 +14,101 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient()
 
-  let query = supabase
-    .from('listing')
-    .select(`
-      *,
-      listing_image!inner (
-        public_url
-      ),
-      bid_listing (
-        starting_price,
-        end_time,
-        curr_bid_amt
-      ),
-      buy_now_listing (
-        asking_price
-      )
-    `)
-    .eq('id', id) // Narrow down to one entry of table
-
-
-  const category = searchParams.get('category')
-  if (category && category !== 'all') {
-    query = query.eq('category', category)
-  }
-
-  const listingType = searchParams.get('listingType')
-  if (listingType && listingType !== 'all') {
-    query = query.eq('listing_type', listingType === 'auction' ? 'BID' : 'BUY_NOW')
-  }
-
-  const itemType = searchParams.get('itemType')
-  if (itemType && itemType !== 'all') {
-    query = query.eq('item_or_service', itemType === 'item')
-  }
-
-  const forRent = searchParams.get('forRent')
-  if (forRent !== null) {
-    query = query.eq('for_rent', forRent === 'true')
-  }
-
-
   try {
-    // Fetch the single listing
-    const { data: listing, error: supabaseError } = await query.single()
-    // Other type of error fetching excluding non-existent listing
-    if (supabaseError) {
-      console.error('Supabase error:', supabaseError)
-      return NextResponse.json(
-        { error: supabaseError.message },
-        { status: 500 }
-      )
-    }
-    // Means resource not found
-    if (!listing) {
+
+    const { data: listing, error: listingError } = await supabase
+      .from('listing')
+      .select(`
+        id,
+        title,
+        description,
+        category,
+        listing_type,
+        created_at,
+        updated_at,
+        item_or_service,
+        views,
+        rent,
+        status
+      `)
+      .eq('id', id)
+      .single()
+
+    if (listingError || !listing) {
       return NextResponse.json(
         { error: 'Listing not found' },
         { status: 404 }
       )
     }
 
-    const price = listing.listing_type === 'BID' 
-      ? (listing.bid_listing?.[0]?.curr_bid_amt || listing.bid_listing?.[0]?.starting_price)
-      : listing.buy_now_listing?.[0]?.asking_price
+    // Fetch both bid_listing and buy_now_listing data
+    const { data: bidListing, error: bidError } = await supabase
+      .from('bid_listing')
+      .select(`
+        starting_price,
+        curr_bid_amt,
+        end_time,
+        min_bid_increment
+      `)
+      .eq('listing_id', id)
+      .single()
 
+    const { data: buyNowListing, error: buyNowError } = await supabase
+      .from('buy_now_listing')
+      .select(`
+        asking_price,
+        min_offer_price
+      `)
+      .eq('listing_id', id)
+      .single()
+
+
+    if (bidError && buyNowError) {
+      return NextResponse.json(
+        { error: 'Neither bid nor buy now listing found' },
+        { status: 404 }
+      )
+    }
+
+    // Listing Image
+    const { data: listingImage, error: imageError } = await supabase
+      .from('listing_image')
+      .select('public_url')
+      .eq('listing_id', id)
+
+    if (imageError || !listingImage || listingImage.length === 0) {
+      return NextResponse.json(
+        { error: 'Listing images not found' },
+        { status: 404 }
+      )
+    }
+
+    // Determine the price and additional info based on listing type
+    let finalPrice = null;
+    let additionalInfo = {};
+
+    if (listing.listing_type === 'BID') {
+      finalPrice = bidListing?.curr_bid_amt || bidListing?.starting_price;
+      additionalInfo = {
+        min_bid_increment: bidListing?.min_bid_increment,
+        end_time: bidListing?.end_time
+      }
+    } else if (listing.listing_type === 'BUY_NOW') {
+      finalPrice = buyNowListing?.asking_price;
+      additionalInfo = {
+        min_offer_price: buyNowListing?.min_offer_price
+      }
+    }
+
+    const finalListing = {
+      ...listing,
+      price: finalPrice,
+      imageUrl: listingImage[0].public_url,  
+      ...additionalInfo 
+    }
 
     return NextResponse.json({
-      listing: {
-        ...listing,
-        price,
-        imageUrl: listing.listing_image.public_url, 
-        end_time: listing.bid_listing?.[0]?.end_time,
-        curr_bid_amt: listing.bid_listing?.[0]?.curr_bid_amt
-      }
+      listing: finalListing
     })
   } catch (error) {
     console.error('Search error:', error)
