@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
 
+    const isItem = formData.get("item") === "TRUE";
+    const isRental = formData.get("rent") === "TRUE";
+
     // (MAIN)listing table row
     const { data: listing, error: listingError } = await supabase
       .from("listing")
@@ -51,6 +54,8 @@ export async function POST(request: NextRequest) {
         category: formData.get("category"),
         listing_type: formData.get("listingType"),
         status: "ACTIVE",
+        item_or_service: isItem,
+        rent: isRental,
       })
       .select()
       .single();

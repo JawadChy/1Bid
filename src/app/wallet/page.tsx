@@ -23,12 +23,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Transaction, columns } from "./columns";
 import { DataTable } from "./data-table";
 
+import { Navbar } from "@/components/navbar";
+
 const WalletPage = () => {
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [tickerDirection, setTickerDirection] = useState<'up' | 'down'>('up');
+
+  const [depositDialogOpen, setDepositDialogOpen] = useState(false);
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
 
   // when mount get data for bal + txn
   useEffect(() => {
@@ -61,6 +66,12 @@ const WalletPage = () => {
       await fetchBalanceAndTransactions();
       setAmount("");
 
+      if (type === 'DEPOSIT') {
+        setDepositDialogOpen(false);
+      } else {
+        setWithdrawDialogOpen(false);
+      }
+
     } catch (error) {
 
       console.error('Transaction error:', error);
@@ -68,7 +79,7 @@ const WalletPage = () => {
     } finally {
 
       setLoading(false);
-      
+
     }
   };
 
@@ -89,6 +100,9 @@ const WalletPage = () => {
   };
 
   return (
+    <>
+    <Navbar animated={false} />
+    <div className="min-h-screen pt-24 px-4 max-w-7xl mx-auto">
     <div className="container mx-auto p-6 max-w-4xl">
       <Card className="mb-8">
         <CardHeader>
@@ -112,7 +126,7 @@ const WalletPage = () => {
                 />
             </div>
             <div className="flex gap-4">
-              <Dialog>
+              <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-green-500 hover:bg-green-600">
                     <Plus className="mr-2 h-4 w-4" /> Add Money
@@ -146,7 +160,7 @@ const WalletPage = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog>
+              <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline">
                     <Minus className="mr-2 h-4 w-4" /> Withdraw
@@ -195,6 +209,8 @@ const WalletPage = () => {
         </CardContent>
       </Card>
     </div>
+    </div>
+    </>
   );
 };
 

@@ -30,8 +30,16 @@ import {
   Clock, 
   ImagePlus,
   Gavel,
-  ShoppingCart 
+  ShoppingCart,
+  Package,
+  Wrench,
+  Key
 } from 'lucide-react';
+import { Navbar } from '@/components/navbar';
+import {
+    RadioGroup,
+    RadioGroupItem
+  } from "@/components/ui/radio-group";
 
 export default function CreateListing() {
   const [files, setFiles] = useState<File[]>([]);
@@ -45,6 +53,8 @@ export default function CreateListing() {
     startingPrice: '',
     endTime: '',
     minBidIncrement: '1.00',
+    item: 'TRUE',
+    rent: 'FALSE',
   });
 
   const handleFileUpload = (files: File[]) => {
@@ -81,7 +91,9 @@ export default function CreateListing() {
   };
 
   return (
-    <div className="container mx-auto py-12 px-4 max-w-4xl">
+    <>
+    <Navbar animated={false}/>
+    <div className="container mx-auto mt-20 py-12 px-4 max-w-4xl">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight flex items-center justify-center gap-3">
           <PlusCircle className="h-8 w-8 text-primary" />
@@ -101,6 +113,54 @@ export default function CreateListing() {
         </CardHeader>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-2">
+              <Label className="text-base">Item Type</Label>
+              <RadioGroup
+                value={formData.item}
+                onValueChange={(value) => setFormData({ ...formData, item: value })}
+                className="flex items-center gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="TRUE" id="physical" />
+                  <Label htmlFor="physical" className="flex items-center gap-2">
+                    <Package className="h-4 w-4" />
+                    Physical Item
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="FALSE" id="service" />
+                  <Label htmlFor="service" className="flex items-center gap-2">
+                    <Wrench className="h-4 w-4" />
+                    Service
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-base">Listing Mode</Label>
+              <RadioGroup
+                value={formData.rent}
+                onValueChange={(value) => setFormData({ ...formData, rent: value })}
+                className="flex items-center gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="FALSE" id="sell" />
+                  <Label htmlFor="sell" className="flex items-center gap-2">
+                    <ShoppingCart className="h-4 w-4" />
+                    Sell
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="TRUE" id="rent" />
+                  <Label htmlFor="rent" className="flex items-center gap-2">
+                    <Key className="h-4 w-4" />
+                    Rent
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             <div className="space-y-2">
               <Label className="text-base">Listing Type</Label>
               <div className="flex items-center space-x-3 p-3 rounded-lg">
@@ -190,7 +250,7 @@ export default function CreateListing() {
                 <div className="space-y-2">
                   <Label htmlFor="askingPrice" className="flex items-center gap-2 text-base">
                     <DollarSign className="h-4 w-4" />
-                    Asking Price
+                    {formData.rent === 'TRUE' ? 'Rental Price (per month)' : 'Asking Price'}
                   </Label>
                   <Input
                     id="askingPrice"
@@ -228,7 +288,7 @@ export default function CreateListing() {
                   <div className="space-y-2">
                     <Label htmlFor="startingPrice" className="flex items-center gap-2 text-base">
                       <DollarSign className="h-4 w-4" />
-                      Starting Price
+                      {formData.rent === 'TRUE' ? 'Starting Rental Price (per month)' : 'Starting Price'}
                     </Label>
                     <Input
                       id="startingPrice"
@@ -299,5 +359,6 @@ export default function CreateListing() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }
