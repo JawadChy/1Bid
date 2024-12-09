@@ -40,6 +40,8 @@ import {
     RadioGroup,
     RadioGroupItem
   } from "@/components/ui/radio-group";
+import { useRouter } from 'next/router';
+
 
 export default function CreateListing() {
   const [files, setFiles] = useState<File[]>([]);
@@ -56,6 +58,8 @@ export default function CreateListing() {
     item: 'TRUE',
     rent: 'FALSE',
   });
+
+  const router = useRouter();
 
   const handleFileUpload = (files: File[]) => {
     setFiles(files);
@@ -84,7 +88,7 @@ export default function CreateListing() {
         throw new Error('Failed to create listing');
       }
 
-      window.location.href = '/my-listings';
+      router.push('/mylistings');
     } catch (error) {
       console.error('Error creating listing:', error);
     }
