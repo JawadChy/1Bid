@@ -116,7 +116,7 @@ export default function CreateListing() {
                 <Label className="text-base">Item Type</Label>
                 <RadioGroup
                   value={formData.item}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string) =>
                     setFormData({ ...formData, item: value })
                   }
                   className="flex items-center gap-4"
@@ -148,7 +148,7 @@ export default function CreateListing() {
                 <Label className="text-base">Listing Mode</Label>
                 <RadioGroup
                   value={formData.rent}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string) =>
                     setFormData({ ...formData, rent: value })
                   }
                   className="flex items-center gap-4"
