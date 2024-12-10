@@ -302,7 +302,7 @@ export default function SearchPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {listings.map((item) => (
-                  <Link href={`/listing?id=${item.id}`}>
+                  <Link key={item.id}  href={`/listing?id=${item.id}`}>
                       <ItemCard 
                         id={item.id} 
                         imageUrl={item.imageUrl}

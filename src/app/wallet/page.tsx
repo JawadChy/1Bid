@@ -79,7 +79,6 @@ const WalletPage = () => {
     } finally {
 
       setLoading(false);
-
     }
   };
 

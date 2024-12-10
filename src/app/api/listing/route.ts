@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
         item_or_service,
         views,
         rent,
-        status
+        status,
+        seller_id
       `)
       .eq('id', id)
       .single()
