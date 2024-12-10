@@ -70,21 +70,39 @@ export function BidDialog({
     fetchBids();
   }, [listingId]);
 
-  const handleAcceptBid = async (bidId: string) => {
-    const { error } = await supabase
-      .from('bid')
-      .update({ status: 'ACCEPTED' })
-      .eq('id', bidId);
-
-    if (error) {
-      toast.error('Failed to accept bid', {
-        position: 'bottom-center'
-      });
-    } else {
+  const handleAcceptBid = async (bidId: string, amount: number) => {
+    if (!window.confirm(`Are you sure you want to accept this bid for $${amount.toLocaleString()}? This action cannot be undone.`)) {
+      return;
+    }
+  
+    try {
+      const { error } = await supabase
+        .from('bid')
+        .update({ status: 'ACCEPTED' })
+        .eq('id', bidId);
+  
+      if (error) throw error;
+  
+      // Update listing's current bid amount
+      const { error: listingError } = await supabase
+        .from('listing')
+        .update({ 
+          curr_bid_amt: amount,
+          curr_bid_id: bidId
+        })
+        .eq('id', listingId);
+  
+      if (listingError) throw listingError;
+  
       toast.success('Bid accepted successfully', {
         position: 'bottom-center'
       });
       fetchBids();
+    } catch (error) {
+      console.error('Error accepting bid:', error);
+      toast.error('Failed to accept bid', {
+        position: 'bottom-center'
+      });
     }
   };
 
@@ -128,7 +146,7 @@ export function BidDialog({
               </div>
               {isOwner && bid.status !== 'ACCEPTED' && (
                 <Button 
-                  onClick={() => handleAcceptBid(bid.id)}
+                  onClick={() => handleAcceptBid(bid.id, bid.amount)}
                   size="sm"
                 >
                   Accept

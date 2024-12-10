@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -48,6 +48,70 @@ export default function ListingPage() {
   const [bidPrice, setBidPrice] = useState<number>(0);
   const [minBidIncrement, setMinBidIncrement] = useState<number>(0);
   const [minOfferPrice, setMinOfferPrice] = useState<number>(0);
+
+    // Define fetchListingData using useCallback to prevent infinite loops
+    const fetchListingData = useCallback(async () => {
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/listing/?id=${id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch listing data");
+        }
+        const data = await response.json();
+        setListingData(data.listing);
+        setMinBidIncrement(data.listing.min_bid_increment || 0);
+        setMinOfferPrice(data.listing.min_offer_price || 0);
+      } catch (error) {
+        setError("404 | Resource not found");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }, [id]);
+  
+    // Initial fetch
+    useEffect(() => {
+      fetchListingData();
+    }, [fetchListingData]);
+  
+    // Check ownership
+    useEffect(() => {
+      const checkOwnership = async () => {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session && listingData) {
+          setIsOwner(session.user.id === listingData.seller_id);
+        }
+      };
+      checkOwnership();
+    }, [listingData]);
+  
+    // Real-time updates subscription
+    useEffect(() => {
+      if (!id) return;
+  
+      const channel = supabase
+        .channel(`listing-${id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bid',
+            filter: `listing_id=eq.${id}`
+          },
+          () => {
+            fetchListingData();
+          }
+        )
+        .subscribe();
+  
+      return () => {
+        channel.unsubscribe();
+      };
+    }, [id, fetchListingData]);
 
   // Check if current user is the listing owner
   useEffect(() => {
@@ -136,40 +200,50 @@ export default function ListingPage() {
 
   const handleBidSubmit = async () => {
     if (isOwner) {
-      toast.error("You cannot bid on your own listing", {
+      toast.error("You cannot bid on your own listing!", {
         position: "bottom-center",
       });
       return;
     }
-
-    if (bidPrice >= currentBid + minBidIncrement) {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error("Please sign in to place a bid", {
-            position: "bottom-center",
-          });
-          return;
-        }
-
-        const { error } = await supabase.from("bid").insert({
-          listing_id: id,
-          bidder_id: session.user.id,
-          amount: bidPrice,
-          status: "PENDING",
-        });
-
-        if (error) throw error;
-        toast.success("Bid placed successfully", { position: "bottom-center" });
-      } catch (error) {
-        toast.error("Failed to place bid", { position: "bottom-center" });
-        console.error("Bid error:", error);
-      }
-    } else {
-      toast.error(`Bid must be at least $${currentBid + minBidIncrement}`, {
+  
+    if (!bidPrice || bidPrice <= currentBid) {
+      toast.error(`Bid must be greater than current bid of $${currentBid}`, {
         position: "bottom-center",
+      });
+      return;
+    }
+  
+    if (bidPrice < currentBid + minBidIncrement) {
+      toast.error(
+        `Bid must be at least $${currentBid + minBidIncrement} (current bid + $${minBidIncrement})`,
+        { position: "bottom-center" }
+      );
+      return;
+    }
+  
+    try {
+      const response = await fetch('/api/bids', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listing_id: id,
+          amount: bidPrice
+        })
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit bid');
+      }
+  
+      toast.success("Bid submitted successfully!", { position: "bottom-center" });
+      setBidPrice(currentBid + minBidIncrement);
+      
+    } catch (error) {
+      console.error("Bid error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to submit bid", {
+        position: "bottom-center"
       });
     }
   };
@@ -216,6 +290,8 @@ export default function ListingPage() {
       });
     }
   };
+
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 dark:from-zinc-900 dark:to-zinc-800 py-12">
