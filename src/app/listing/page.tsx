@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { Timer } from 'lucide-react';
-import { Navbar } from '@/components/navbar';
-import { RainbowButton } from '@/components/ui/rainbow-button';
-import { BackgroundGradient } from '@/components/ui/background-gradient';
-import { BidDialog } from '@/components/bid-dia';
-import { Comments } from '@/components/comments';
-import { createClient } from '@/lib/supabase/client';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { Timer } from "lucide-react";
+import { Navbar } from "@/components/navbar";
+import { RainbowButton } from "@/components/ui/rainbow-button";
+import { BackgroundGradient } from "@/components/ui/background-gradient";
+import { BidDialog } from "@/components/bid-dia";
+import { Comments } from "@/components/comments";
+import { createClient } from "@/lib/supabase/client";
+import toast from "react-hot-toast";
 
 interface ListingData {
   id: string;
@@ -19,7 +19,7 @@ interface ListingData {
   title: string;
   description: string;
   category: string;
-  listing_type: 'BID' | 'BUY_NOW';
+  listing_type: "BID" | "BUY_NOW";
   status: string;
   created_at: string;
   updated_at: string;
@@ -36,7 +36,7 @@ interface ListingData {
 
 export default function ListingPage() {
   const searchParams = useSearchParams();
-  const id = searchParams.get('id');
+  const id = searchParams.get("id");
   const supabase = createClient();
 
   const [listingData, setListingData] = useState<ListingData | null>(null);
@@ -44,7 +44,7 @@ export default function ListingPage() {
   const [error, setError] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
 
-  const [offerPrice, setOfferPrice] = useState<number | string>('');
+  const [offerPrice, setOfferPrice] = useState<number | string>("");
   const [bidPrice, setBidPrice] = useState<number>(0);
   const [minBidIncrement, setMinBidIncrement] = useState<number>(0);
   const [minOfferPrice, setMinOfferPrice] = useState<number>(0);
@@ -52,7 +52,9 @@ export default function ListingPage() {
   // Check if current user is the listing owner
   useEffect(() => {
     const checkOwnership = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session && listingData) {
         setIsOwner(session.user.id === listingData.seller_id);
       }
@@ -67,14 +69,14 @@ export default function ListingPage() {
       try {
         const response = await fetch(`/api/listing/?id=${id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch listing data');
+          throw new Error("Failed to fetch listing data");
         }
         const data = await response.json();
         setListingData(data.listing);
         setMinBidIncrement(data.listing.min_bid_increment || 0);
         setMinOfferPrice(data.listing.min_offer_price || 0);
       } catch (error) {
-        setError('404 | Resource not found');
+        setError("404 | Resource not found");
         console.error(error);
       } finally {
         setLoading(false);
@@ -113,14 +115,18 @@ export default function ListingPage() {
     rent,
   } = listingData;
 
-  const isAuction = listing_type === 'BID';
-  const isBuyNow = listing_type === 'BUY_NOW';
+  const isAuction = listing_type === "BID";
+  const isBuyNow = listing_type === "BUY_NOW";
 
-  const currentBid = isAuction ? (curr_bid_amt || price) : price;
-  const timeLeft = isAuction && end_time ? new Date(end_time).toLocaleString() : undefined;
+  const currentBid = isAuction ? curr_bid_amt || price : price;
+  const timeLeft =
+    isAuction && end_time ? new Date(end_time).toLocaleString() : undefined;
 
   const handleBidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(Number(e.target.value), currentBid + minBidIncrement);
+    const value = Math.max(
+      Number(e.target.value),
+      currentBid + minBidIncrement
+    );
     setBidPrice(value);
   };
 
@@ -130,70 +136,84 @@ export default function ListingPage() {
 
   const handleBidSubmit = async () => {
     if (isOwner) {
-      toast.error("You cannot bid on your own listing", { position: 'bottom-center' });
+      toast.error("You cannot bid on your own listing", {
+        position: "bottom-center",
+      });
       return;
     }
 
     if (bidPrice >= currentBid + minBidIncrement) {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (!session) {
-          toast.error('Please sign in to place a bid', { position: 'bottom-center' });
+          toast.error("Please sign in to place a bid", {
+            position: "bottom-center",
+          });
           return;
         }
 
-        const { error } = await supabase
-          .from('bid')
-          .insert({
-            listing_id: id,
-            bidder_id: session.user.id,
-            amount: bidPrice,
-            status: 'PENDING'
-          });
+        const { error } = await supabase.from("bid").insert({
+          listing_id: id,
+          bidder_id: session.user.id,
+          amount: bidPrice,
+          status: "PENDING",
+        });
 
         if (error) throw error;
-        toast.success('Bid placed successfully', { position: 'bottom-center' });
+        toast.success("Bid placed successfully", { position: "bottom-center" });
       } catch (error) {
-        toast.error('Failed to place bid', { position: 'bottom-center' });
-        console.error('Bid error:', error);
+        toast.error("Failed to place bid", { position: "bottom-center" });
+        console.error("Bid error:", error);
       }
     } else {
-      toast.error(`Bid must be at least $${currentBid + minBidIncrement}`, { position: 'bottom-center' });
+      toast.error(`Bid must be at least $${currentBid + minBidIncrement}`, {
+        position: "bottom-center",
+      });
     }
   };
 
   const handleOfferSubmit = async () => {
     if (isOwner) {
-      toast.error("You cannot make an offer on your own listing", { position: 'bottom-center' });
+      toast.error("You cannot make an offer on your own listing", {
+        position: "bottom-center",
+      });
       return;
     }
 
     const offerPriceNumber = Number(offerPrice);
     if (offerPriceNumber >= minOfferPrice) {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (!session) {
-          toast.error('Please sign in to make an offer', { position: 'bottom-center' });
+          toast.error("Please sign in to make an offer", {
+            position: "bottom-center",
+          });
           return;
         }
 
-        const { error } = await supabase
-          .from('offer')
-          .insert({
-            listing_id: id,
-            buyer_id: session.user.id,
-            amount: offerPriceNumber,
-            status: 'PENDING'
-          });
+        const { error } = await supabase.from("offer").insert({
+          listing_id: id,
+          buyer_id: session.user.id,
+          amount: offerPriceNumber,
+          status: "PENDING",
+        });
 
         if (error) throw error;
-        toast.success('Offer submitted successfully', { position: 'bottom-center' });
+        toast.success("Offer submitted successfully", {
+          position: "bottom-center",
+        });
       } catch (error) {
-        toast.error('Failed to submit offer', { position: 'bottom-center' });
-        console.error('Offer error:', error);
+        toast.error("Failed to submit offer", { position: "bottom-center" });
+        console.error("Offer error:", error);
       }
     } else {
-      toast.error(`Offer must be at least $${minOfferPrice}`, { position: 'bottom-center' });
+      toast.error(`Offer must be at least $${minOfferPrice}`, {
+        position: "bottom-center",
+      });
     }
   };
 
@@ -229,11 +249,15 @@ export default function ListingPage() {
               {/* Right Column - Product Info */}
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white">{title}</h1>
+                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+                    {title}
+                  </h1>
                   <p className="mt-2 text-xl text-gray-500 dark:text-gray-400">
-                    {isAuction ? 'Auction' : isBuyNow ? 'Buy Now' : 'Rent Now'}
+                    {isAuction ? "Auction" : isBuyNow ? "Buy Now" : "Rent Now"}
                   </p>
-                  <p className="mt-4 text-gray-700 dark:text-gray-300">{description}</p>
+                  <p className="mt-4 text-gray-700 dark:text-gray-300">
+                    {description}
+                  </p>
                 </div>
 
                 {/* Price Info */}
@@ -242,15 +266,13 @@ export default function ListingPage() {
                     <div className="flex justify-between items-center mb-4">
                       <div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {isAuction
-                            ? 'Current Bid'
-                            : "Owner's Asking Price"}
+                          {isAuction ? "Current Bid" : "Owner's Asking Price"}
                         </p>
                         <p className="text-3xl font-bold text-gray-900 dark:text-white">
                           ${currentBid.toLocaleString()}
                         </p>
                       </div>
-                      {isAuction && isOwner && (
+                      {isAuction && isOwner && id && (
                         <BidDialog listingId={id} isOwner={isOwner} />
                       )}
                     </div>
@@ -307,13 +329,19 @@ export default function ListingPage() {
                     {!isOwner && (
                       <div className="space-y-4 mt-6">
                         {isAuction && (
-                          <RainbowButton onClick={handleBidSubmit} className="w-full py-6">
+                          <RainbowButton
+                            onClick={handleBidSubmit}
+                            className="w-full py-6"
+                          >
                             Place Bid
                           </RainbowButton>
                         )}
 
                         {isBuyNow && (
-                          <RainbowButton onClick={handleOfferSubmit} className="w-full py-6">
+                          <RainbowButton
+                            onClick={handleOfferSubmit}
+                            className="w-full py-6"
+                          >
                             Make Offer
                           </RainbowButton>
                         )}
@@ -325,7 +353,7 @@ export default function ListingPage() {
             </motion.div>
 
             {/* Comments Section */}
-            <Comments listingId={id} />
+            {id && <Comments listingId={id} />}
           </div>
         )}
       </div>

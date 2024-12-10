@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -11,17 +10,17 @@ export async function POST(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // if no session, create anonymous comment with visitor session ID
+  // if no session, create anonymous comment with visitor_id
   if (!session) {
-    const visitorId = cookies().get('visitor_id')?.value || 'anonymous'
+    // Ensure visitor_id is always set for anonymous comments
+    const visitor_id = crypto.randomUUID(); // generate unique visitor id
     const { data, error } = await supabase
-      .from('comments')
+      .from('comment')
       .insert({
         listing_id,
         content,
-        user_id: null,
-        visitor_id: visitorId,
-        is_visitor: true
+        is_visitor: true,
+        visitor_id: visitor_id
       })
       .select()
       .single()
@@ -33,13 +32,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data })
   }
 
-  // For logged in users
+  // for logged in users, create comment with user_id 
   const { data, error } = await supabase
-    .from('comments')
+    .from('comment')
     .insert({
       listing_id,
-      content,
       user_id: session.user.id,
+      content,
       is_visitor: false
     })
     .select()
@@ -61,16 +60,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Listing ID required' }, { status: 400 })
   }
 
+  // join with profile to get user details including role and vip status
+  // order by created_at desc to show newest comments first
   const { data, error } = await supabase
     .from('comment')
     .select(`
       *,
       profile:user_id (
         first_name,
-        last_name
-      ),
-      user:user_id (
-        email
+        last_name,
+        role,
+        is_vip
       )
     `)
     .eq('listing_id', listing_id)

@@ -5,13 +5,12 @@ import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
-interface CommentUser {
-  email?: string;
-  profile?: {
-    first_name?: string;
-    last_name?: string;
-  };
+interface Profile {
+  first_name?: string;
+  last_name?: string;
+  role?: string;
 }
 
 interface Comment {
@@ -21,7 +20,7 @@ interface Comment {
   user_id: string | null;
   visitor_id?: string;
   is_visitor: boolean;
-  user?: CommentUser;
+  profile?: Profile;
 }
 
 export function Comments({ listingId }: { listingId: string }) {
@@ -29,23 +28,28 @@ export function Comments({ listingId }: { listingId: string }) {
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
-  
+
   const fetchComments = async () => {
-    const response = await fetch(`/api/comments?listing_id=${listingId}`);
-    const { data } = await response.json();
-    setComments(data || []);
+    try {
+      const response = await fetch(`/api/comments?listing_id=${listingId}`);
+      if (!response.ok) throw new Error('Failed to fetch comments');
+      const { data } = await response.json();
+      setComments(data || []);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      toast.error('Failed to load comments', { position: 'bottom-center' });
+    }
   };
 
   useEffect(() => {
     fetchComments();
     
-    // Set up real-time subscription
     const channel = supabase
-      .channel('comments')
+      .channel(`comments-${listingId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'comments',
+        table: 'comment',
         filter: `listing_id=eq.${listingId}`
       }, () => {
         fetchComments();
@@ -62,44 +66,66 @@ export function Comments({ listingId }: { listingId: string }) {
     if (!newComment.trim()) return;
 
     setLoading(true);
-    const response = await fetch('/api/comments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        listing_id: listingId,
-        content: newComment.trim()
-      })
-    });
-
-    if (!response.ok) {
-      toast.error('Failed to post comment', {
-        position: 'bottom-center'
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listing_id: listingId,
+          content: newComment.trim()
+        })
       });
-    } else {
+
+      if (!response.ok) throw new Error('Failed to post comment');
+      
       toast.success('Comment posted successfully', {
         position: 'bottom-center'
       });
       setNewComment('');
       await fetchComments();
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      toast.error('Failed to post comment', {
+        position: 'bottom-center'
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const getCommentorName = (comment: Comment) => {
     if (comment.is_visitor) {
       return `Visitor_${comment.visitor_id?.slice(0, 6)}`;
     }
-    if (comment.user?.profile?.first_name) {
-      return `${comment.user.profile.first_name} ${comment.user.profile.last_name}`;
+    if (comment.profile?.first_name && comment.profile?.last_name) {
+      return `${comment.profile.first_name} ${comment.profile.last_name}`;
     }
-    return comment.user?.email?.split('@')[0] || 'Unknown';
+    return 'Unknown';
   };
 
   const getInitial = (comment: Comment) => {
     if (comment.is_visitor) return 'V';
-    return comment.user?.profile?.first_name?.[0] || 
-           comment.user?.email?.[0]?.toUpperCase() || 
-           '?';
+    return comment.profile?.first_name?.[0] || '?';
+  };
+
+  const getAvatarColor = (comment: Comment) => {
+    if (comment.is_visitor) {
+      return 'bg-green-500/10 text-green-600 dark:text-green-400';
+    }
+    if (comment.profile?.role === 'S') {
+      return 'bg-red-500/10 text-red-600 dark:text-red-400';
+    }
+    return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
+  };
+
+  const getNameColor = (comment: Comment) => {
+    if (comment.is_visitor) {
+      return 'text-green-600 dark:text-green-400';
+    }
+    if (comment.profile?.role === 'S') {
+      return 'text-red-600 dark:text-red-400';
+    }
+    return 'text-blue-600 dark:text-blue-400';
   };
 
   return (
@@ -125,14 +151,17 @@ export function Comments({ listingId }: { listingId: string }) {
       <div className="space-y-4">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-4 p-4 rounded-lg bg-white/50 dark:bg-zinc-800/50">
-            <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-              <span className="text-base font-medium text-blue-600 dark:text-blue-400">
+            <div className={cn(
+              "h-10 w-10 rounded-full flex items-center justify-center",
+              getAvatarColor(comment)
+            )}>
+              <span className="text-base font-medium">
                 {getInitial(comment)}
               </span>
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-medium">
+                <p className={cn("font-medium", getNameColor(comment))}>
                   {getCommentorName(comment)}
                 </p>
                 <span className="text-sm text-gray-500">
