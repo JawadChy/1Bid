@@ -8,6 +8,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signup } from "../actions";
 import { ArrowLeft } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // import {
 //   IconBrandGithub,
@@ -17,27 +23,56 @@ import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 
 export default function SignUp() {
   const [loading, setLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationAttempts, setVerificationAttempts] = useState(0);
+  const [arithmeticAnswer, setArithmeticAnswer] = useState("");
+  const [currentQuestion, setCurrentQuestion] = useState({ num1: 0, num2: 0 });
   const router = useRouter();
+
+  // Generate a random arithmetic question
+  const generateQuestion = () => {
+    const num1 = Math.floor(Math.random() * 20);
+    const num2 = Math.floor(Math.random() * 20);
+    setCurrentQuestion({ num1, num2 });
+    setArithmeticAnswer("");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    generateQuestion();
+    setShowVerification(true);
+  };
 
-    try {
-      // Get form element
-      const form = e.currentTarget;
-
-      const formData = new FormData(form);
-
-      await signup(formData);
-      router.push("/auth/registrationconfirmation");
-    } catch (error) {
-      console.error('Form submission error:', error);
-    } finally {
-      setLoading(false);
+  const handleVerificationSubmit = async () => {
+    const correctAnswer = currentQuestion.num1 + currentQuestion.num2;
+    
+    if (parseInt(arithmeticAnswer) === correctAnswer) {
+      setShowVerification(false);
+      setLoading(true);
+      
+      try {
+        const form = document.querySelector('form');
+        if (form) {
+          const formData = new FormData(form);
+          await signup(formData);
+          router.push("/auth/registrationconfirmation");
+        }
+      } catch (error) {
+        console.error('Form submission error:', error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setVerificationAttempts(prev => prev + 1);
+      if (verificationAttempts + 1 >= 3) {
+        setShowVerification(false);
+        setVerificationAttempts(0);
+        window.location.reload(); //Refreshes the page to clear details
+      } else {
+        generateQuestion(); // Generate a new question for the next attempt
+        setArithmeticAnswer("");
+      }
     }
-
-    console.log("Form submitted");
   };
 
   {/* 
@@ -127,6 +162,41 @@ export default function SignUp() {
           </button>
         </div> */}
         </form>
+
+        <Dialog open={showVerification} onOpenChange={setShowVerification}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Verification Required</DialogTitle>
+            </DialogHeader>
+            <div className="p-4">
+              <p className="mb-4">Please solve this simple math problem:</p>
+              <p className="text-lg font-semibold mb-4">
+                What is {currentQuestion.num1} + {currentQuestion.num2}?
+              </p>
+              <div className="flex flex-col space-y-4">
+                <Input
+                  type="number"
+                  value={arithmeticAnswer}
+                  onChange={(e) => setArithmeticAnswer(e.target.value)}
+                  placeholder="Enter your answer"
+                />
+                <button
+                  onClick={handleVerificationSubmit}
+                  className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-9 font-medium"
+                >
+                  Submit Answer
+                </button>
+                {verificationAttempts > 0 && (
+                  <p className="text-red-500">
+                    Incorrect answer. Attempts remaining: {3 - verificationAttempts}
+                  </p>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+
         <p className="text-center text-gray-600 dark:text-gray-400">
           Have an account?{" "}
           <Link href="/auth/signin" className="text-blue-500 hover:text-blue-600">
