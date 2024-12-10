@@ -64,6 +64,7 @@ export async function signup(formData: FormData) {
         id: userID,
         first_name: profData.fN,
         last_name: profData.lN,
+        wallet_bal: 0, //initialize wallet balance to 0
       }
     ])
 
