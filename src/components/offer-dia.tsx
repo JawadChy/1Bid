@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -12,44 +12,42 @@ interface Profile {
   last_name: string;
 }
 
-interface Bid {
+interface Offer {
   id: string;
   amount: number;
   created_at: string;
-  bidder_id: string;
+  buyer_id: string;
   status: string;
-  bidder: Profile;
+  buyer: Profile;
 }
 
-export function BidDialog({ 
+export function OfferDialog({ 
   listingId,
-  isOwner,
   isOpen,
   onClose 
 }: { 
   listingId: string;
-  isOwner: boolean;
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const [bids, setBids] = useState<Bid[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const supabase = createClient();
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
-    bidId: string;
+    offerId: string;
     amount: number;
   }>({
     isOpen: false,
-    bidId: '',
+    offerId: '',
     amount: 0
   });
 
-  const fetchBids = async () => {
-    const { data: bidData, error } = await supabase
-      .from('bid')
+  const fetchOffers = async () => {
+    const { data: offerData, error } = await supabase
+      .from('offer')
       .select(`
         *,
-        bidder:profile!bid_bidder_id_fkey (
+        buyer:profile!offer_buyer_id_fkey (
           first_name,
           last_name
         )
@@ -58,50 +56,36 @@ export function BidDialog({
       .order('amount', { ascending: false });
 
     if (error) {
-      console.error('Error fetching bids:', error);
+      console.error('Error fetching offers:', error);
       return;
     }
 
-    setBids(bidData || []);
+    setOffers(offerData || []);
   };
 
   useEffect(() => {
-    fetchBids();
+    fetchOffers();
   }, [listingId]);
 
-  const handleAcceptBid = async (bidId: string, amount: number) => {
+  const handleAcceptOffer = async (offerId: string, amount: number) => {
     try {
       const { error } = await supabase
-        .from('bid')
+        .from('offer')
         .update({ status: 'ACCEPTED' })
-        .eq('id', bidId);
+        .eq('id', offerId);
   
       if (error) throw error;
   
-      const { error: listingError } = await supabase
-        .from('listing')
-        .update({ 
-          curr_bid_amt: amount,
-          curr_bid_id: bidId
-        })
-        .eq('id', listingId);
-  
-      if (listingError) throw listingError;
-  
-      toast.success('Bid accepted successfully', {
-        position: 'bottom-center'
-      });
-      fetchBids();
+      toast.success('Offer accepted successfully');
+      fetchOffers();
     } catch (error) {
-      console.error('Error accepting bid:', error);
-      toast.error('Failed to accept bid', {
-        position: 'bottom-center'
-      });
+      console.error('Error accepting offer:', error);
+      toast.error('Failed to accept offer');
     }
   };
 
-  const getBidderName = (bid: Bid) => {
-    const { first_name, last_name } = bid.bidder;
+  const getBuyerName = (offer: Offer) => {
+    const { first_name, last_name } = offer.buyer;
     return first_name && last_name ? `${first_name} ${last_name}` : 'Anonymous';
   };
 
@@ -110,35 +94,35 @@ export function BidDialog({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Bid History</DialogTitle>
+            <DialogTitle>Offer History</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 max-h-[400px] overflow-y-auto">
-            {bids.map((bid) => (
-              <div key={bid.id} className="flex justify-between items-center p-4 rounded-lg bg-white/50 dark:bg-zinc-800/50">
+            {offers.map((offer) => (
+              <div key={offer.id} className="flex justify-between items-center p-4 rounded-lg bg-white/50 dark:bg-zinc-800/50">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center">
                     <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                      {bid.bidder.first_name?.[0] || bid.bidder.email[0].toUpperCase()}
+                      {offer.buyer.first_name?.[0] || 'A'}
                     </span>
                   </div>
                   <div>
                     <p className="font-medium">
-                      ${bid.amount.toLocaleString()}
+                      ${offer.amount.toLocaleString()}
                     </p>
                     <p className="text-sm text-gray-500">
-                      by {getBidderName(bid)}
+                      by {getBuyerName(offer)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(bid.created_at).toLocaleString()}
+                      {new Date(offer.created_at).toLocaleString()}
                     </p>
                   </div>
                 </div>
-                {isOwner && bid.status !== 'ACCEPTED' && (
+                {offer.status !== 'ACCEPTED' && (
                   <Button 
                     onClick={() => setConfirmDialog({
                       isOpen: true,
-                      bidId: bid.id,
-                      amount: bid.amount
+                      offerId: offer.id,
+                      amount: offer.amount
                     })}
                     size="sm"
                   >
@@ -154,11 +138,11 @@ export function BidDialog({
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
-        onConfirm={() => handleAcceptBid(confirmDialog.bidId, confirmDialog.amount)}
-        title="Accept Bid"
-        message={`Are you sure you want to accept this bid for $${confirmDialog.amount.toLocaleString()}? This action cannot be undone.`}
-        confirmText="Accept Bid"
+        onConfirm={() => handleAcceptOffer(confirmDialog.offerId, confirmDialog.amount)}
+        title="Accept Offer"
+        message={`Are you sure you want to accept this offer for $${confirmDialog.amount.toLocaleString()}?`}
+        confirmText="Accept Offer"
       />
     </>
   );
-}
+} 

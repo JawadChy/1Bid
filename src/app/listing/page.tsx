@@ -11,7 +11,8 @@ import { BackgroundGradient } from "@/components/ui/background-gradient";
 import { BidDialog } from "@/components/bid-dia";
 import { Comments } from "@/components/comments";
 import { createClient } from "@/lib/supabase/client";
-import toast from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
+import { OfferDialog } from "@/components/offer-dia";
 
 interface ListingData {
   id: string;
@@ -43,6 +44,8 @@ export default function ListingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [showBidHistory, setShowBidHistory] = useState(false);
+  const [showOfferHistory, setShowOfferHistory] = useState(false);
 
   const [offerPrice, setOfferPrice] = useState<number | string>("");
   const [bidPrice, setBidPrice] = useState<number>(0);
@@ -50,72 +53,38 @@ export default function ListingPage() {
   const [minOfferPrice, setMinOfferPrice] = useState<number>(0);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
 
-
-    // Define fetchListingData using useCallback to prevent infinite loops
-    const fetchListingData = useCallback(async () => {
-      if (!id) return;
-      
-      try {
-        const response = await fetch(`/api/listing/?id=${id}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch listing data");
-        }
-        const data = await response.json();
-        setListingData(data.listing);
-        setMinBidIncrement(data.listing.min_bid_increment || 0);
-        setMinOfferPrice(data.listing.min_offer_price || 0);
-      } catch (error) {
-        setError("404 | Resource not found");
-        console.error(error);
-      } finally {
-        setLoading(false);
+  // Define fetchListingData using useCallback to prevent infinite loops
+  const fetchListingData = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      const response = await fetch(`/api/listing/?id=${id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch listing data");
       }
-    }, [id]);
-  
-    // Initial fetch
-    useEffect(() => {
-      fetchListingData();
-    }, [fetchListingData]);
-  
-    // Check ownership
-    useEffect(() => {
-      const checkOwnership = async () => {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session && listingData) {
-          setIsOwner(session.user.id === listingData.seller_id);
-        }
-      };
-      checkOwnership();
-    }, [listingData]);
-  
-    // Real-time updates subscription
-    useEffect(() => {
-      if (!id) return;
-  
-      const channel = supabase
-        .channel(`listing-${id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'bid',
-            filter: `listing_id=eq.${id}`
-          },
-          () => {
-            fetchListingData();
-          }
-        )
-        .subscribe();
-  
-      return () => {
-        channel.unsubscribe();
-      };
-    }, [id, fetchListingData]);
+      const data = await response.json();
+      setListingData(data.listing);
+      setMinBidIncrement(data.listing.min_bid_increment || 0);
+      setMinOfferPrice(data.listing.min_offer_price || 0);
+      
+      // Set initial bid price to current bid + increment
+      const initialBid = (data.listing.curr_bid_amt || data.listing.price) + (data.listing.min_bid_increment || 0);
+      setBidPrice(initialBid);
+      
+    } catch (error) {
+      setError("404 | Resource not found");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
-  // Check if current user is the listing owner
+  // Initial fetch
+  useEffect(() => {
+    fetchListingData();
+  }, [fetchListingData]);
+
+  // Check ownership
   useEffect(() => {
     const checkOwnership = async () => {
       const {
@@ -126,59 +95,77 @@ export default function ListingPage() {
       }
     };
     checkOwnership();
-  }, [listingData]);
+  }, [listingData, supabase.auth]);
 
+  // Real-time updates subscription
   useEffect(() => {
     if (!id) return;
 
-    const fetchListingData = async () => {
-      try {
-        const response = await fetch(`/api/listing/?id=${id}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch listing data");
+    // Subscribe to both listing and bid changes
+    const channel = supabase
+      .channel(`listing_and_bids_${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bid',
+          filter: `listing_id=eq.${id}`
+        },
+        (payload) => {
+          console.log('Bid change received:', payload);
+          fetchListingData();
+          toast.success("New bid placed!", { position: "bottom-center" });
         }
-        const data = await response.json();
-        setListingData(data.listing);
-        setMinBidIncrement(data.listing.min_bid_increment || 0);
-        setMinOfferPrice(data.listing.min_offer_price || 0);
-      } catch (error) {
-        setError("404 | Resource not found");
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'listing',
+          filter: `id=eq.${id}`
+        },
+        (payload) => {
+          console.log('Listing change received:', payload);
+          fetchListingData();
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
+
+    return () => {
+      console.log('Unsubscribing from channel');
+      channel.unsubscribe();
     };
+  }, [id, fetchListingData, supabase]);
 
-    fetchListingData();
-  }, [id]);
-
+  // Timer effect for auctions
   useEffect(() => {
-    if (!listingData || listingData.listing_type !== "BID" || !listingData.end_time) return;
-  
+    if (!listingData?.end_time || listingData.listing_type !== "BID") return;
+
     const auctionEnd = new Date(listingData.end_time).getTime();
     if (isNaN(auctionEnd)) {
       console.error("Invalid end_time:", listingData.end_time);
-      return; 
+      return;
     }
-  
+
     const interval = setInterval(() => {
-      // Get current date to calculate
       const now = new Date().getTime();
       const timeLeft = auctionEnd - now;
-  
+
       if (timeLeft <= 0) {
         clearInterval(interval);
-        setRemainingTime(0); // Auction has ended
+        setRemainingTime(0);
+        toast.success("Auction has ended!", { position: "bottom-center" });
       } else {
-        setRemainingTime(timeLeft); // Update remaining time
+        setRemainingTime(timeLeft);
       }
     }, 1000);
-  
-    // Cleanup on unmount
+
     return () => clearInterval(interval);
-  }, [listingData]);  // Dependency on listingData
-  
-  
+  }, [listingData?.end_time, listingData?.listing_type]);
 
   if (error) {
     return (
@@ -217,10 +204,7 @@ export default function ListingPage() {
     isAuction && end_time ? new Date(end_time).toLocaleString() : undefined;
 
   const handleBidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(
-      Number(e.target.value),
-      currentBid + minBidIncrement
-    );
+    const value = Number(e.target.value);
     setBidPrice(value);
   };
 
@@ -229,9 +213,19 @@ export default function ListingPage() {
   };
 
   const handleBidSubmit = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Please sign in to place bids", {
+        position: "bottom-center",
+        duration: 3000,
+      });
+      return;
+    }
+
     if (isOwner) {
       toast.error("You cannot bid on your own listing!", {
         position: "bottom-center",
+        duration: 3000,
       });
       return;
     }
@@ -239,19 +233,26 @@ export default function ListingPage() {
     if (!bidPrice || bidPrice <= currentBid) {
       toast.error(`Bid must be greater than current bid of $${currentBid}`, {
         position: "bottom-center",
+        duration: 3000,
       });
       return;
     }
   
-    if (bidPrice < currentBid + minBidIncrement) {
+    if (bidPrice - currentBid < minBidIncrement) {
       toast.error(
-        `Bid must be at least $${currentBid + minBidIncrement} (current bid + $${minBidIncrement})`,
-        { position: "bottom-center" }
+        `Bid increment must be at least $${minBidIncrement}`,
+        { position: "bottom-center", duration: 3000 }
       );
       return;
     }
   
     try {
+      // Optimistically update the UI
+      setListingData(prev => prev ? {
+        ...prev,
+        curr_bid_amt: bidPrice
+      } : null);
+
       const response = await fetch('/api/bids', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -264,24 +265,40 @@ export default function ListingPage() {
       const data = await response.json();
       
       if (!response.ok) {
+        // Revert optimistic update on error
+        await fetchListingData();
         throw new Error(data.error || 'Failed to submit bid');
       }
   
-      toast.success("Bid submitted successfully!", { position: "bottom-center" });
-      setBidPrice(currentBid + minBidIncrement);
+      toast.success("Bid submitted successfully!", { 
+        position: "bottom-center",
+        duration: 3000
+      });
       
     } catch (error) {
       console.error("Bid error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to submit bid", {
-        position: "bottom-center"
+        position: "bottom-center",
+        duration: 3000
       });
     }
   };
 
   const handleOfferSubmit = async () => {
+    // Check authentication first
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Please sign in to make offers", {
+        position: "bottom-center",
+        duration: 3000,
+      });
+      return;
+    }
+
     if (isOwner) {
       toast.error("You cannot make an offer on your own listing", {
         position: "bottom-center",
+        duration: 3000,
       });
       return;
     }
@@ -289,16 +306,6 @@ export default function ListingPage() {
     const offerPriceNumber = Number(offerPrice);
     if (offerPriceNumber >= minOfferPrice) {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error("Please sign in to make an offer", {
-            position: "bottom-center",
-          });
-          return;
-        }
-
         const { error } = await supabase.from("offer").insert({
           listing_id: id,
           buyer_id: session.user.id,
@@ -307,16 +314,23 @@ export default function ListingPage() {
         });
 
         if (error) throw error;
+        
         toast.success("Offer submitted successfully", {
           position: "bottom-center",
+          duration: 3000,
         });
+        setOfferPrice(minOfferPrice); // Reset offer price
       } catch (error) {
-        toast.error("Failed to submit offer", { position: "bottom-center" });
+        toast.error("Failed to submit offer", { 
+          position: "bottom-center",
+          duration: 3000
+        });
         console.error("Offer error:", error);
       }
     } else {
       toast.error(`Offer must be at least $${minOfferPrice}`, {
         position: "bottom-center",
+        duration: 3000,
       });
     }
   };
@@ -332,6 +346,16 @@ export default function ListingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 dark:from-zinc-900 dark:to-zinc-800 py-12">
+      <Toaster 
+        position="bottom-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#333',
+            color: '#fff',
+          },
+        }}
+      />
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 mt-8">
         {loading ? (
@@ -391,8 +415,29 @@ export default function ListingPage() {
                           <span>{remainingTime > 0 ? formatTime(remainingTime) : "Auction Ended"}</span>
                         </div>
                       )}
-
                     </div>
+
+                    {/* Bid/Offer History Buttons for Owners */}
+                    {isOwner && (
+                      <>
+                        {isAuction && (
+                          <RainbowButton
+                            onClick={() => setShowBidHistory(true)}
+                            className="w-full py-4 mb-4"
+                          >
+                            View Bid History
+                          </RainbowButton>
+                        )}
+                        {isBuyNow && (
+                          <RainbowButton
+                            onClick={() => setShowOfferHistory(true)}
+                            className="w-full py-4 mb-4"
+                          >
+                            View Offers
+                          </RainbowButton>
+                        )}
+                      </>
+                    )}
 
                     {/* Time Remaining for Auctions */}
                     {isAuction && timeLeft && (
@@ -414,8 +459,8 @@ export default function ListingPage() {
                               <input
                                 type="number"
                                 min={currentBid + minBidIncrement}
-                                step={minBidIncrement}
-                                value={bidPrice || currentBid + minBidIncrement}
+                                step="1"
+                                value={bidPrice}
                                 onChange={handleBidChange}
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-3xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                               />
@@ -474,6 +519,25 @@ export default function ListingPage() {
           </div>
         )}
       </div>
+
+      {/* Bid History Dialog */}
+      {showBidHistory && (
+        <BidDialog
+          listingId={id!}
+          isOwner={isOwner}
+          onClose={() => setShowBidHistory(false)}
+          isOpen={showBidHistory}
+        />
+      )}
+
+      {/* Offer History Dialog */}
+      {isOwner && isBuyNow && (
+        <OfferDialog
+          listingId={id!}
+          isOpen={showOfferHistory}
+          onClose={() => setShowOfferHistory(false)}
+        />
+      )}
     </div>
   );
 }

@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
       ),
       buy_now_listing (
         asking_price
-      )
+      ),
+      bids:bid (count)
     `)
     .eq('status', 'ACTIVE')
     .eq('listing_image.position', 1)
@@ -100,7 +101,8 @@ export async function GET(request: NextRequest) {
         price,
         imageUrl: listing.listing_image.public_url, // Just need single image URL
         end_time: listing.bid_listing?.[0]?.end_time,
-        curr_bid_amt: listing.bid_listing?.[0]?.curr_bid_amt
+        curr_bid_amt: listing.bid_listing?.[0]?.curr_bid_amt,
+        bid_count: listing.bids?.count || 0
       }
     }).filter(Boolean)
 

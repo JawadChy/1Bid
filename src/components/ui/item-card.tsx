@@ -11,6 +11,7 @@ interface ItemCardProps {
   price: number;
   bids?: number;
   timeLeft?: string;
+  bidCount?: number;
 }
 
 export default function ItemCard({
@@ -22,6 +23,7 @@ export default function ItemCard({
   price,
   bids = 0,
   timeLeft,
+  bidCount = 0
 }: ItemCardProps) {
   return (
     <div className="w-[360px] rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-zinc-900">
@@ -52,14 +54,10 @@ export default function ItemCard({
             </p>
           </div>
           <div className="space-y-1 text-right">
-            {isAuction ? (
-              <>
-                <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                  {bids} bids
-                </p>
-              </>
-            ) : (
-              <></>
+            {isAuction && (
+              <div className="text-sm text-gray-500">
+                {bidCount} {bidCount === 1 ? 'bid' : 'bids'}
+              </div>
             )}
           </div>
         </div>
