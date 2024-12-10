@@ -1,9 +1,21 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 
-const RegistrationConfirmation: React.FC = (): JSX.Element => {
+const RegistrationConfirmation = (): JSX.Element => {
+    const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
+
+    // Auto-redirect after 5 seconds
+    useEffect(() => {
+        const timer: NodeJS.Timeout = setTimeout(() => {
+            setIsRedirecting(true);
+            window.location.href = "/auth/signin";
+        }, 5000);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <div className="min-h-screen flex justify-center items-center">
             <div className="max-w-md w-full mx-auto rounded-lg p-4 md:p-8 shadow-input bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
