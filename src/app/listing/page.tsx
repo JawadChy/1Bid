@@ -48,6 +48,8 @@ export default function ListingPage() {
   const [bidPrice, setBidPrice] = useState<number>(0);
   const [minBidIncrement, setMinBidIncrement] = useState<number>(0);
   const [minOfferPrice, setMinOfferPrice] = useState<number>(0);
+  const [remainingTime, setRemainingTime] = useState<number | null>(null);
+
 
     // Define fetchListingData using useCallback to prevent infinite loops
     const fetchListingData = useCallback(async () => {
@@ -149,6 +151,34 @@ export default function ListingPage() {
 
     fetchListingData();
   }, [id]);
+
+  useEffect(() => {
+    if (!listingData || listingData.listing_type !== "BID" || !listingData.end_time) return;
+  
+    const auctionEnd = new Date(listingData.end_time).getTime();
+    if (isNaN(auctionEnd)) {
+      console.error("Invalid end_time:", listingData.end_time);
+      return; 
+    }
+  
+    const interval = setInterval(() => {
+      // Get current date to calculate
+      const now = new Date().getTime();
+      const timeLeft = auctionEnd - now;
+  
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        setRemainingTime(0); // Auction has ended
+      } else {
+        setRemainingTime(timeLeft); // Update remaining time
+      }
+    }, 1000);
+  
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, [listingData]);  // Dependency on listingData
+  
+  
 
   if (error) {
     return (
@@ -291,7 +321,14 @@ export default function ListingPage() {
     }
   };
 
+  const formatTime = (timeInMs: number) => {
+    const hours = Math.floor(timeInMs / 3600000);
+    const minutes = Math.floor((timeInMs % 3600000) / 60000);
+    const seconds = Math.floor((timeInMs % 60000) / 1000);
   
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
+    
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 dark:from-zinc-900 dark:to-zinc-800 py-12">
@@ -326,7 +363,7 @@ export default function ListingPage() {
               <div className="space-y-6">
                 <div>
                   <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-                    {title}
+                    {title} 
                   </h1>
                   <p className="mt-2 text-xl text-gray-500 dark:text-gray-400">
                     {isAuction ? "Auction" : isBuyNow ? "Buy Now" : "Rent Now"}
@@ -348,16 +385,20 @@ export default function ListingPage() {
                           ${currentBid.toLocaleString()}
                         </p>
                       </div>
-                      {isAuction && isOwner && id && (
-                        <BidDialog listingId={id} isOwner={isOwner} />
+                      {isAuction && remainingTime !== null && (
+                        <div className="flex items-center gap-2 mb-6 text-gray-500 dark:text-gray-400">
+                          <Timer className="w-4 h-4" />
+                          <span>{remainingTime > 0 ? formatTime(remainingTime) : "Auction Ended"}</span>
+                        </div>
                       )}
+
                     </div>
 
                     {/* Time Remaining for Auctions */}
                     {isAuction && timeLeft && (
                       <div className="flex items-center gap-2 mb-6 text-gray-500 dark:text-gray-400">
                         <Timer className="w-4 h-4" />
-                        <span>{timeLeft} remaining</span>
+                        <span>{timeLeft} m</span>
                       </div>
                     )}
 
