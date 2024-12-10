@@ -4,8 +4,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signup } from "../actions";
+import { ArrowLeft } from "lucide-react";
+
 // import {
 //   IconBrandGithub,
 //   IconBrandGoogle,
@@ -14,6 +17,7 @@ import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 
 export default function SignUp() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -22,11 +26,11 @@ export default function SignUp() {
     try {
       // Get form element
       const form = e.currentTarget;
-    
+
       const formData = new FormData(form);
 
       await signup(formData);
-      
+      router.push("/auth/registrationconfirmation");
     } catch (error) {
       console.error('Form submission error:', error);
     } finally {
@@ -46,52 +50,61 @@ export default function SignUp() {
 
     */}
   return (
-    <div className="min-h-screen flex justify-center items-center">
-    <div className="max-w-md w-full mx-auto rounded-lg p-4 md:p-8 shadow-input bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
-      <TextHoverEffect text="1Bid" />
-      <form className="my-6" onSubmit={handleSubmit}>
-        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
-          <LabelInputContainer>
-            <Label htmlFor="firstname">First name</Label>
-            <Input required name="firstname" id="firstname" placeholder="Barrack" type="text" />
-          </LabelInputContainer>
-          <LabelInputContainer>
-            <Label htmlFor="lastname">Last name</Label>
-            <Input required name="lastname" id="lastname" placeholder="Obama" type="text" />
-          </LabelInputContainer>
-        </div>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="email">Email Address</Label>
-          <Input required name="email" id="email" placeholder="potus@gmail.com" type="email" />
-        </LabelInputContainer>
+    <div className="min-h-screen flex justify-center items-center relative">
+      {/* Back to Home Button */}
+      <Link
+        href="/"
+        className="absolute top-4 left-4 flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>Back to Home Page</span>
+      </Link>
 
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="password">Password</Label>
-          <Input required name="password" id="password" placeholder="••••••••" type="password" />
-        </LabelInputContainer>
-        <LabelInputContainer className="mb-8">
-          <Label htmlFor="confirmpassword">Confirm Password</Label>
-          <Input
-            required
-            name="confirmpassword"
-            id="confirmpassword"
-            placeholder="••••••••"
-            type="password"
-          />
-        </LabelInputContainer>
+      <div className="max-w-md w-full mx-auto rounded-lg p-4 md:p-8 shadow-input bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
+        <TextHoverEffect text="1Bid" />
+        <form className="my-6" onSubmit={handleSubmit}>
+          <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
+            <LabelInputContainer>
+              <Label htmlFor="firstname">First name</Label>
+              <Input required name="firstname" id="firstname" placeholder="Barrack" type="text" />
+            </LabelInputContainer>
+            <LabelInputContainer>
+              <Label htmlFor="lastname">Last name</Label>
+              <Input required name="lastname" id="lastname" placeholder="Obama" type="text" />
+            </LabelInputContainer>
+          </div>
+          <LabelInputContainer className="mb-4">
+            <Label htmlFor="email">Email Address</Label>
+            <Input required name="email" id="email" placeholder="potus@gmail.com" type="email" />
+          </LabelInputContainer>
 
-        <button
-          className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-9 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
-          type="submit"
-          disabled={loading}
-        >
+          <LabelInputContainer className="mb-4">
+            <Label htmlFor="password">Password</Label>
+            <Input required name="password" id="password" placeholder="••••••••" type="password" />
+          </LabelInputContainer>
+          <LabelInputContainer className="mb-8">
+            <Label htmlFor="confirmpassword">Confirm Password</Label>
+            <Input
+              required
+              name="confirmpassword"
+              id="confirmpassword"
+              placeholder="••••••••"
+              type="password"
+            />
+          </LabelInputContainer>
+
+          <button
+            className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-9 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
+            type="submit"
+            disabled={loading}
+          >
             {loading ? 'Signing up...' : 'Sign up →'}
-          <BottomGradient />
-        </button>
+            <BottomGradient />
+          </button>
 
-        <div className="bg-gradient-to-r from-transparent via-neutral-300 dark:via-neutral-700 to-transparent my-6 h-[1px] w-full" />
-        {/* TODO: fix oauth issue later */}
-        {/* <div className="flex flex-col space-y-4 ">
+          <div className="bg-gradient-to-r from-transparent via-neutral-300 dark:via-neutral-700 to-transparent my-6 h-[1px] w-full" />
+          {/* TODO: fix oauth issue later */}
+          {/* <div className="flex flex-col space-y-4 ">
           <button
             className=" relative group/btn flex space-x-2 items-center justify-center px-4 w-full text-black rounded-md h-9 font-medium shadow-input bg-gray-50 dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_var(--neutral-800)]"
             type="submit"
@@ -113,14 +126,14 @@ export default function SignUp() {
             <BottomGradient />
           </button>
         </div> */}
-      </form>
-      <p className="text-center text-gray-600 dark:text-gray-400">
+        </form>
+        <p className="text-center text-gray-600 dark:text-gray-400">
           Have an account?{" "}
           <Link href="/auth/signin" className="text-blue-500 hover:text-blue-600">
             Sign in
           </Link>
         </p>
-    </div>
+      </div>
     </div>
   );
 }
