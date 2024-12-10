@@ -22,9 +22,9 @@ export const AuthButton = () => {
 
   if (!user) {
     return (
-        <Link href="/auth/signin">
+        <Link href="/auth/signup">
             <Button variant="expandIcon" Icon={LogIn} iconPlacement="right">
-                    Sign In
+                    Get Started
             </Button>
         </Link>
     );
