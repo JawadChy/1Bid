@@ -34,9 +34,7 @@ export default function ForgotPassword() {
             }
 
             setSuccessMessage("Password reset instructions have been sent to your email.");
-            setTimeout(() => {
-                router.push('/auth/login?message=Check your email to reset your password');
-            }, 2000);
+
         } catch (error) {
             setError(error instanceof Error ? error.message : 'An error occurred while resetting password');
         } finally {
