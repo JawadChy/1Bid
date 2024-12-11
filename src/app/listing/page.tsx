@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -56,6 +56,41 @@ export default function ListingPage() {
   const [minBidIncrement, setMinBidIncrement] = useState<number>(0);
   const [minOfferPrice, setMinOfferPrice] = useState<number>(0);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
+  const hasLoggedViewRef = useRef(false);
+
+  useEffect(() => {
+    if (!id || hasLoggedViewRef.current) return; // Prevent duplicate calls with useRef because Next.js rerenders 
+
+    // Function to send the POST request to log the view
+    const logView = async () => {
+      try {
+        const response = await fetch("/api/view/addView", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            listing_id: id, // Send the id in the body
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          console.error("Error logging view:", data.error);
+        } else {
+          console.log("View logged successfully:", data.message);
+        }
+      } catch (error) {
+        console.error("Failed to log view:", error);
+      }
+    };
+
+    // Call the function to log the view
+    logView();
+
+    // Mark the view as logged so it does not trigger again.
+    hasLoggedViewRef.current = true;
+  }, [id]); // Only run the effect when `id` changes
 
   // Define fetchListingData using useCallback to prevent infinite loops
   const fetchListingData = useCallback(async () => {
