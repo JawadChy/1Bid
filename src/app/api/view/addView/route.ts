@@ -1,10 +1,3 @@
-// /api/view/addView
-/* Body required in POST request:
-{
-  "listing_id": ""
-}
-
-*/
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -19,28 +12,53 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing listing_id' }, { status: 400 })
   }
 
-  // Retrieve the session and validate if visitor or active user
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  try {
+    // First, check if the listing is active
+    const { data: listing, error: listingError } = await supabase
+      .from('listing')
+      .select('status, views')
+      .eq('id', listing_id)
+      .single();
 
-  // Valid session exists so we may call our SQL function
-  if (session && session.user) {
-    const userId = session.user.id
-
-    // Call the log_view function in Supabase. No need to worry about details since it is handled by database.
-    const { error } = await supabase.rpc('log_view', {
-      p_user_id: userId,
-      p_listing_id: listing_id
-    })
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (listingError) {
+      throw listingError;
     }
 
-    return NextResponse.json({ status: 200 })
-  }
+    // Only proceed with view logging and increment if listing is active
+    if (listing.status === 'ACTIVE') {
+      // Increment views in the listing table
+      const { error: updateError } = await supabase
+        .from('listing')
+        .update({ views: (listing.views || 0) + 1 })
+        .eq('id', listing_id);
 
-  // If only a visitor
-  return NextResponse.json({ status: 200 })
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Get the session to log the view if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // If user is authenticated, log the view in view_history
+      if (session?.user) {
+        const { error: viewError } = await supabase.rpc('log_view', {
+          p_user_id: session.user.id,
+          p_listing_id: listing_id
+        });
+
+        if (viewError) {
+          throw viewError;
+        }
+      }
+    }
+
+    return NextResponse.json({ status: 200, message: 'View processed successfully' });
+
+  } catch (error) {
+    console.error('Error processing view:', error);
+    return NextResponse.json(
+      { error: 'Failed to process view' },
+      { status: 500 }
+    );
+  }
 }
