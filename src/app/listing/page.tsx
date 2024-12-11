@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/app/auth/auth-context';
 import { ConfirmRatingDialog } from "@/components/ui/confirm-rating-dialog";
 import { Button } from "@/components/ui/button";
+import { ComplaintDialog } from "@/components/ui/complaint-dialog";
 
 interface ListingData {
   id: string;
@@ -65,6 +66,7 @@ export default function ListingPage() {
   const hasLoggedViewRef = useRef(false);
   const [selectedRating, setSelectedRating] = useState<number>(5);
   const [showRatingConfirm, setShowRatingConfirm] = useState(false);
+  const [showComplaintDialog, setShowComplaintDialog] = useState(false);
 
   useEffect(() => {
     if (!id || hasLoggedViewRef.current) return; // Prevent duplicate calls with useRef because Next.js rerenders 
@@ -103,7 +105,7 @@ export default function ListingPage() {
   // Define fetchListingData using useCallback to prevent infinite loops
   const fetchListingData = useCallback(async () => {
     if (!id) return;
-    
+
     try {
       const response = await fetch(`/api/listing/?id=${id}`);
       if (!response.ok) {
@@ -113,11 +115,11 @@ export default function ListingPage() {
       setListingData(data.listing);
       setMinBidIncrement(data.listing.min_bid_increment || 0);
       setMinOfferPrice(data.listing.min_offer_price || 0);
-      
+
       // Set initial bid price to current bid + increment
       const initialBid = (data.listing.curr_bid_amt || data.listing.price) + (data.listing.min_bid_increment || 0);
       setBidPrice(initialBid);
-      
+
     } catch (error) {
       setError("404 | Resource not found");
       console.error(error);
@@ -277,18 +279,18 @@ export default function ListingPage() {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to submit bid');
       }
 
       // Only update UI after successful response
       await fetchListingData();
-      toast.success("Bid submitted successfully!", { 
+      toast.success("Bid submitted successfully!", {
         position: "bottom-center",
         duration: 3000
       });
-      
+
     } catch (error) {
       console.error("Bid error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to submit bid", {
@@ -337,7 +339,7 @@ export default function ListingPage() {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to submit offer');
       }
@@ -360,10 +362,10 @@ export default function ListingPage() {
     const hours = Math.floor(timeInMs / 3600000);
     const minutes = Math.floor((timeInMs % 3600000) / 60000);
     const seconds = Math.floor((timeInMs % 60000) / 1000);
-  
+
     return `${hours}h ${minutes}m ${seconds}s`;
   };
-    
+
 
   const handleRating = async (type: 'buyer' | 'seller') => {
     try {
@@ -395,7 +397,7 @@ export default function ListingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 dark:from-zinc-900 dark:to-zinc-800 py-12">
-      <Toaster 
+      <Toaster
         position="bottom-center"
         toastOptions={{
           duration: 3000,
@@ -406,7 +408,7 @@ export default function ListingPage() {
         }}
       />
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 mt-8">
+      <div className="max-w-7xl mx-auto px-4 mt-24">
         {loading ? (
           <div className="animate-pulse">
             <div className="w-full h-96 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg shadow-md" />
@@ -439,7 +441,7 @@ export default function ListingPage() {
                     <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
                       {title}
                     </h1>
-                    <Badge 
+                    <Badge
                       variant={listingData.status === 'ACTIVE' ? 'default' : 'secondary'}
                       className="text-sm"
                     >
@@ -594,69 +596,102 @@ export default function ListingPage() {
 
             {listingData.status === 'SOLD' && (user?.id === listingData.buyer_id || user?.id === listingData.seller_id) && (
               <div className="mb-8 p-6 rounded-lg bg-white/50 dark:bg-zinc-800/50">
-                <h3 className="text-xl font-semibold mb-4">Rating</h3>
-                
+
                 {user?.id === listingData.buyer_id && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 flex flex-col items-center w-full">
                     {!listingData.seller_rating ? (
                       <>
-                        <p className="text-sm text-gray-500">Rate the seller (1-5)</p>
-                        <div className="flex items-center gap-4">
-                          <input
-                            type="number"
-                            min={1}
-                            max={5}
-                            step={0.5}
-                            value={selectedRating}
-                            onChange={(e) => setSelectedRating(Number(e.target.value))}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-3xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-                          />
-                          <Button 
-                            onClick={() => setShowRatingConfirm(true)}
-                            className="ml-4"
-                          >
-                            Submit
-                          </Button>
+                        <div className="flex flex-col items-center justify-center gap-4">
+                          <p className="text-2xl font-semibold text-white">
+                            Rate the seller from 1-5
+                          </p>
+                          <div className="flex items-center gap-6">
+                            <div className="rating rating-lg gap-1">
+                              {[1, 2, 3, 4, 5].map((value) => (
+                                <input
+                                  key={value}
+                                  type="radio"
+                                  name="rating-seller"
+                                  className="mask mask-star-2 bg-blue-400"
+                                  checked={selectedRating === value}
+                                  onChange={() => setSelectedRating(value)}
+                                />
+                              ))}
+                            </div>
+                            <Button 
+                              onClick={() => setShowRatingConfirm(true)}
+                              className="px-8 py-3 text-lg rounded-full"
+                            >
+                              Submit
+                            </Button>
+                          </div>
                         </div>
                       </>
                     ) : (
-                      <div className="text-center text-gray-600 dark:text-gray-300">
+                      <div className="text-center text-xl text-white mb-8">
                         You rated the seller {listingData.seller_rating} stars
                       </div>
                     )}
+                    
+                    <div className="mt-16">
+                      <Button 
+                        variant="destructive" 
+                        onClick={() => setShowComplaintDialog(true)}
+                        className="py-4 text-lg px-12"
+                      >
+                        Make a Complaint
+                      </Button>
+                    </div>
                   </div>
                 )}
 
-                {user?.id === listingData.seller_id && (
-                  <div className="space-y-4">
-                    {!listingData.buyer_rating ? (
-                      <>
-                        <p className="text-sm text-gray-500">Rate the buyer (1-5)</p>
-                        <div className="flex items-center gap-4">
-                          <input
-                            type="number"
-                            min={1}
-                            max={5}
-                            step={0.5}
-                            value={selectedRating}
-                            onChange={(e) => setSelectedRating(Number(e.target.value))}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-3xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-                          />
-                          <Button 
-                            onClick={() => setShowRatingConfirm(true)}
-                            className="ml-4"
-                          >
-                            Submit
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center text-gray-600 dark:text-gray-300">
-                        You rated the buyer {listingData.buyer_rating} stars
-                      </div>
-                    )}
-                  </div>
-                )}
+{user?.id === listingData.seller_id && (
+  <div className="space-y-4 flex flex-col items-center w-full">
+    {!listingData.buyer_rating ? (
+      <>
+        <div className="flex flex-col items-center justify-center gap-4">
+          <p className="text-2xl font-semibold text-white">
+            Rate the buyer from 1-5
+          </p>
+          <div className="flex items-center gap-6">
+            <div className="rating rating-lg gap-1">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <input
+                  key={value}
+                  type="radio"
+                  name="rating-buyer"
+                  className="mask mask-star-2 bg-blue-400"
+                  checked={selectedRating === value}
+                  onChange={() => setSelectedRating(value)}
+                />
+              ))}
+            </div>
+            <Button 
+              onClick={() => setShowRatingConfirm(true)}
+              className="px-8 py-3 text-lg rounded-full"
+            >
+              Submit
+            </Button>
+          </div>
+        </div>
+      </>
+    ) : (
+      <div className="text-center text-xl text-white mb-8">
+        You rated the buyer {listingData.buyer_rating} stars
+      </div>
+    )}
+    
+    <div className="mt-16">
+      <Button 
+        variant="destructive" 
+        onClick={() => setShowComplaintDialog(true)}
+        className="py-4 text-lg px-12"
+      >
+        Make a Complaint
+      </Button>
+    </div>
+  </div>
+)}
 
                 <ConfirmRatingDialog
                   isOpen={showRatingConfirm}
@@ -665,6 +700,15 @@ export default function ListingPage() {
                   rating={selectedRating}
                   type={user?.id === listingData.buyer_id ? 'seller' : 'buyer'}
                 />
+
+                {id && listingData && (
+                  <ComplaintDialog
+                    isOpen={showComplaintDialog}
+                    onClose={() => setShowComplaintDialog(false)}
+                    listingId={id}
+                    accusedId={user?.id === listingData.buyer_id ? listingData.seller_id : listingData.buyer_id}
+                  />
+                )}
               </div>
             )}
 
