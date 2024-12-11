@@ -1,100 +1,112 @@
 import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
+    const json = await request.json();
+    const { type, amount } = json;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // not gonna make new table bc im lazy so just using txns table, get all row where user is either buyer or seller
-    const { data: transactions, error: txError } = await supabase
-      .from('transaction')
-      .select('*')
-      .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-      .order('created_at', { ascending: false });
+    // Call the stored procedure
+    const { data, error } = await supabase
+      .rpc('handle_wallet_transaction', {
+        p_user_id: user.id,
+        p_type: type,
+        p_amount: amount
+      });
 
-    if (txError) {
-      console.error('Transaction fetch error:', txError);
-      return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 });
+    if (error) {
+      if (error.message === 'Insufficient balance') {
+        return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
+      }
+      throw error;
     }
 
-    // calc balance
-    const balance = transactions?.reduce((acc, tx) => {
-      if (tx.buyer_id === user.id) {
-        return acc - (tx.amount || 0);
-      }
-      if (tx.seller_id === user.id) {
-        return acc + (tx.amount || 0);
-      }
-      return acc;
-    }, 0) || 0;
+    return NextResponse.json({ 
+      balance: data[0].new_balance,
+      message: `Successfully ${type === 'DEPOSIT' ? 'added' : 'withdrawn'} $${amount}`
+    });
 
-    return NextResponse.json({ balance, transactions });
   } catch (error) {
-    console.error('Error in GET handler:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Transaction error:', error);
+    return NextResponse.json(
+      { error: 'Failed to process transaction' },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { type, amount } = await request.json();
-
-    if (!type || !amount || isNaN(Number(amount))) {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
-    }
-
-    // to withdraw check bal first to see if enough moniez
-    if (type === 'WITHDRAWAL') {
-      const { data: transactions } = await supabase
-        .from('transaction')
-        .select('*')
-        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`);
-      
-      const currentBalance = transactions?.reduce((acc, tx) => {
-        if (tx.buyer_id === user.id) return acc - (tx.amount || 0);
-        if (tx.seller_id === user.id) return acc + (tx.amount || 0);
-        return acc;
-      }, 0) || 0;
-      
-      if (currentBalance < amount) {
-        return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
-      }
-    }
-
-    // add actual transaction to table
-    const { data: transaction, error: txError } = await supabase
-      .from('transaction')
-      .insert([{
-        type,
-        amount: Math.abs(amount),
-        status: 'completed',
-        buyer_id: type === 'WITHDRAWAL' ? user.id : null,
-        seller_id: type === 'DEPOSIT' ? user.id : null,
-        created_at: new Date().toISOString()
-      }])
-      .select()
+    // Get wallet balance from profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profile')
+      .select('wallet_bal')
+      .eq('id', user.id)
       .single();
 
-    if (txError) {
-      console.error('Transaction creation error:', txError);
-      return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });
+    if (profileError) {
+      throw profileError;
     }
 
-    return NextResponse.json(transaction);
+    // Get transactions but filter based on user's role in each transaction
+    const { data: transactions, error: transactionError } = await supabase
+      .from('transaction')
+      .select(`
+        id,
+        type,
+        amount,
+        status,
+        created_at,
+        seller_id,
+        buyer_id
+      `)
+      .or(`seller_id.eq.${user.id},buyer_id.eq.${user.id}`)
+      .order('created_at', { ascending: false });
+
+    if (transactionError) {
+      throw transactionError;
+    }
+
+    // Filter and transform transactions to show correct type based on user's role
+    const filteredTransactions = transactions.map(transaction => {
+      // If user is the seller, only show SALE transactions
+      if (transaction.seller_id === user.id && transaction.type === 'SALE') {
+        return transaction;
+      }
+      // If user is the buyer, only show PURCHASE transactions
+      if (transaction.buyer_id === user.id && transaction.type === 'PURCHASE') {
+        return transaction;
+      }
+      // For deposits and withdrawals, show as is
+      if (transaction.type === 'DEPOSIT' || transaction.type === 'WITHDRAWAL') {
+        return transaction;
+      }
+      return null;
+    }).filter(Boolean); // Remove null entries
+
+    return NextResponse.json({
+      balance: profile.wallet_bal,
+      transactions: filteredTransactions
+    });
+
   } catch (error) {
-    console.error('Error in POST handler:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error fetching wallet data:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch wallet data' },
+      { status: 500 }
+    );
   }
 }

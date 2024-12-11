@@ -13,6 +13,7 @@ import { Comments } from "@/components/comments";
 import { createClient } from "@/lib/supabase/client";
 import { Toaster, toast } from "react-hot-toast";
 import { OfferDialog } from "@/components/offer-dia";
+import { Badge } from "@/components/ui/badge";
 
 interface ListingData {
   id: string;
@@ -21,7 +22,7 @@ interface ListingData {
   description: string;
   category: string;
   listing_type: "BID" | "BUY_NOW";
-  status: string;
+  status: 'ACTIVE' | 'SOLD';
   created_at: string;
   updated_at: string;
   item_or_service: boolean;
@@ -33,6 +34,9 @@ interface ListingData {
   min_offer_price?: number;
   end_time?: string;
   curr_bid_amt?: number;
+  buyer_id?: string;
+  sold_at?: string;
+  sold_price?: number;
 }
 
 export default function ListingPage() {
@@ -213,6 +217,7 @@ export default function ListingPage() {
   };
 
   const handleBidSubmit = async () => {
+    // Check authentication first
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       toast.error("Please sign in to place bids", {
@@ -229,30 +234,8 @@ export default function ListingPage() {
       });
       return;
     }
-  
-    if (!bidPrice || bidPrice <= currentBid) {
-      toast.error(`Bid must be greater than current bid of $${currentBid}`, {
-        position: "bottom-center",
-        duration: 3000,
-      });
-      return;
-    }
-  
-    if (bidPrice - currentBid < minBidIncrement) {
-      toast.error(
-        `Bid increment must be at least $${minBidIncrement}`,
-        { position: "bottom-center", duration: 3000 }
-      );
-      return;
-    }
-  
-    try {
-      // Optimistically update the UI
-      setListingData(prev => prev ? {
-        ...prev,
-        curr_bid_amt: bidPrice
-      } : null);
 
+    try {
       const response = await fetch('/api/bids', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -261,15 +244,15 @@ export default function ListingPage() {
           amount: bidPrice
         })
       });
-  
+
       const data = await response.json();
       
       if (!response.ok) {
-        // Revert optimistic update on error
-        await fetchListingData();
         throw new Error(data.error || 'Failed to submit bid');
       }
-  
+
+      // Only update UI after successful response
+      await fetchListingData();
       toast.success("Bid submitted successfully!", { 
         position: "bottom-center",
         duration: 3000
@@ -304,33 +287,40 @@ export default function ListingPage() {
     }
 
     const offerPriceNumber = Number(offerPrice);
-    if (offerPriceNumber >= minOfferPrice) {
-      try {
-        const { error } = await supabase.from("offer").insert({
-          listing_id: id,
-          buyer_id: session.user.id,
-          amount: offerPriceNumber,
-          status: "PENDING",
-        });
-
-        if (error) throw error;
-        
-        toast.success("Offer submitted successfully", {
-          position: "bottom-center",
-          duration: 3000,
-        });
-        setOfferPrice(minOfferPrice); // Reset offer price
-      } catch (error) {
-        toast.error("Failed to submit offer", { 
-          position: "bottom-center",
-          duration: 3000
-        });
-        console.error("Offer error:", error);
-      }
-    } else {
+    if (offerPriceNumber < minOfferPrice) {
       toast.error(`Offer must be at least $${minOfferPrice}`, {
         position: "bottom-center",
         duration: 3000,
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/offers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listing_id: id,
+          amount: offerPriceNumber
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit offer');
+      }
+
+      toast.success("Offer submitted successfully", {
+        position: "bottom-center",
+        duration: 3000,
+      });
+      setOfferPrice(minOfferPrice); // Reset offer price
+    } catch (error) {
+      console.error("Offer error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to submit offer", {
+        position: "bottom-center",
+        duration: 3000
       });
     }
   };
@@ -386,9 +376,27 @@ export default function ListingPage() {
               {/* Right Column - Product Info */}
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-                    {title} 
-                  </h1>
+                  <div className="flex items-center gap-4 mb-2">
+                    <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+                      {title}
+                    </h1>
+                    <Badge 
+                      variant={listingData.status === 'ACTIVE' ? 'default' : 'secondary'}
+                      className="text-sm"
+                    >
+                      {listingData.status}
+                    </Badge>
+                    {isAuction && (
+                      <Badge variant="outline" className="text-sm">
+                        Auction
+                      </Badge>
+                    )}
+                    {isBuyNow && (
+                      <Badge variant="outline" className="text-sm">
+                        Buy Now
+                      </Badge>
+                    )}
+                  </div>
                   <p className="mt-2 text-xl text-gray-500 dark:text-gray-400">
                     {isAuction ? "Auction" : isBuyNow ? "Buy Now" : "Rent Now"}
                   </p>
@@ -488,7 +496,7 @@ export default function ListingPage() {
                     )}
 
                     {/* Submit Button */}
-                    {!isOwner && (
+                    {!isOwner && listingData.status === 'ACTIVE' && (
                       <div className="space-y-4 mt-6">
                         {isAuction && (
                           <RainbowButton
@@ -506,6 +514,17 @@ export default function ListingPage() {
                           >
                             Make Offer
                           </RainbowButton>
+                        )}
+                      </div>
+                    )}
+
+                    {listingData.status === 'SOLD' && (
+                      <div className="p-4 bg-gray-100 dark:bg-zinc-800 rounded-lg text-center">
+                        <p className="text-lg font-semibold">This item has been sold</p>
+                        {listingData.sold_at && (
+                          <p className="text-sm text-gray-500">
+                            Sold on {new Date(listingData.sold_at).toLocaleDateString()}
+                          </p>
                         )}
                       </div>
                     )}

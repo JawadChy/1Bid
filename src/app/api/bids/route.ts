@@ -16,6 +16,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Calculate wallet balance from all transactions
+    const { data: transactions, error: transactionsError } = await supabase
+      .from('transaction')
+      .select('amount, type, seller_id, buyer_id')
+      .or(`seller_id.eq.${user.id},buyer_id.eq.${user.id}`);
+
+    if (transactionsError) {
+      console.error('Error fetching wallet data:', transactionsError);
+      return NextResponse.json(
+        { error: 'Failed to fetch wallet balance' },
+        { status: 500 }
+      );
+    }
+
+    // Calculate total balance considering all transaction types
+    const walletBalance = transactions?.reduce((balance, tx) => {
+      if (tx.type === 'DEPOSIT' && tx.seller_id === user.id) {
+        return balance + tx.amount;
+      }
+      if (tx.type === 'WITHDRAWAL' && tx.buyer_id === user.id) {
+        return balance - tx.amount;
+      }
+      if (tx.type === 'PURCHASE' && tx.buyer_id === user.id) {
+        return balance - tx.amount;
+      }
+      if (tx.type === 'SALE' && tx.seller_id === user.id) {
+        return balance + tx.amount;
+      }
+      return balance;
+    }, 0) || 0;
+
+    // Check if user has sufficient balance
+    if (walletBalance < amount) {
+      return NextResponse.json(
+        { error: 'Insufficient wallet balance' },
+        { status: 400 }
+      );
+    }
+
     // Fetch the listing with bid_listing details
     const { data: listing, error: listingError } = await supabase
       .from('listing')

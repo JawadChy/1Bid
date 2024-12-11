@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Wallet, ChevronDown, Settings, Plus, LogOut } from "lucide-react";
+import { Wallet, ChevronDown, Settings, Plus, LogOut, ListIcon } from "lucide-react";
 import { Button } from "./button";
 import Link from "next/link";
 
@@ -96,6 +96,13 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
         <DropdownMenuItem onClick={() => router.push('/wallet')} className="cursor-pointer">
           <Wallet className="mr-2 h-4 w-4 text-sky-600 dark:text-sky-400" />
           <span className="text-sky-600 dark:text-sky-400">Wallet</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link href="/mylistings" className="w-full cursor-pointer">
+            <ListIcon className="mr-2 h-4 w-4 text-violet-600 dark:text-violet-400" />
+            <span className="text-violet-600 dark:text-violet-400">My Listings</span>
+          </Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

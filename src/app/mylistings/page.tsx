@@ -17,6 +17,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 interface ListingImage {
   public_url: string;
@@ -40,14 +41,10 @@ interface Listing {
   item_or_service: boolean;
   category: string;
   rent: boolean;
+  status: 'ACTIVE' | 'SOLD' | 'PURCHASED';
   listing_image: ListingImage[];
   bid_listing?: BidListing[];
   buy_now_listing?: BuyNowListing[];
-}
-
-interface Transaction {
-  id: string;
-  listing: Listing;
 }
 
 type ListingCardProps = {
@@ -56,11 +53,8 @@ type ListingCardProps = {
 };
 
 export default function MyListings() {
-  const [activeListings, setActiveListings] = useState<Listing[]>([]);
-  const [soldListings, setSoldListings] = useState<Transaction[]>([]);
-  const [purchasedListings, setPurchasedListings] = useState<Transaction[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
     fetchListings();
@@ -70,20 +64,22 @@ export default function MyListings() {
     try {
       const response = await fetch('/api/listings/mylistings');
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch listings');
+        throw new Error('Failed to fetch listings');
       }
       
       const data = await response.json();
-      setActiveListings(data.activeListings);
-      setSoldListings(data.soldListings);
-      setPurchasedListings(data.purchasedListings);
+      setListings(data.listings || []);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching listings:', error);
       setIsLoading(false);
     }
   };
+
+  // Filter listings based on status
+  const activeListings = listings.filter(listing => listing.status === 'ACTIVE');
+  const soldListings = listings.filter(listing => listing.status === 'SOLD');
+  const purchasedListings = listings.filter(listing => listing.status === 'PURCHASED');
 
   const ListingCard = ({ listing, type }: ListingCardProps) => {
     if (!listing) return null;
@@ -95,8 +91,13 @@ export default function MyListings() {
       ? listing.bid_listing?.[0]?.curr_bid_amt || listing.bid_listing?.[0]?.starting_price
       : listing.buy_now_listing?.[0]?.asking_price;
 
+    const router = useRouter();
+
     return (
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+      <Card 
+        className="overflow-hidden hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+        onClick={() => router.push(`/listing?id=${listing.id}`)}
+      >
         <div className="aspect-video w-full overflow-hidden bg-gray-100">
           <img 
             src={mainImage || '/placeholder.png'} 
@@ -208,13 +209,11 @@ export default function MyListings() {
             </TabsContent>
 
             <TabsContent value="sold">
-              {soldListings.length > 0 && soldListings.some(transaction => transaction.listing) ? (
+              {soldListings.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {soldListings
-                    .filter(transaction => transaction.listing)
-                    .map((transaction) => (
-                      <ListingCard key={transaction.id} listing={transaction.listing} type="sold" />
-                    ))}
+                  {soldListings.map((listing) => (
+                    <ListingCard key={listing.id} listing={listing} type="sold" />
+                  ))}
                 </div>
               ) : (
                 <Card className="bg-muted">
@@ -232,13 +231,11 @@ export default function MyListings() {
             </TabsContent>
 
             <TabsContent value="purchased">
-              {purchasedListings.length > 0 && purchasedListings.some(transaction => transaction.listing) ? (
+              {purchasedListings.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {purchasedListings
-                    .filter(transaction => transaction.listing)
-                    .map((transaction) => (
-                      <ListingCard key={transaction.id} listing={transaction.listing} type="purchased" />
-                    ))}
+                  {purchasedListings.map((listing) => (
+                    <ListingCard key={listing.id} listing={listing} type="purchased" />
+                  ))}
                 </div>
               ) : (
                 <Card className="bg-muted">

@@ -24,6 +24,7 @@ import { Transaction, columns } from "./columns";
 import { DataTable } from "./data-table";
 
 import { Navbar } from "@/components/navbar";
+import { toast } from "react-hot-toast";
 
 const WalletPage = () => {
   const [balance, setBalance] = useState(0);
@@ -86,15 +87,44 @@ const WalletPage = () => {
     try {
       const response = await fetch('/api/wallet/transaction');
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch wallet data');
+        throw new Error('Failed to fetch wallet data');
       }
       
       const data = await response.json();
-      setBalance(data.balance || 0);
-      setTransactions(data.transactions || []);
+      if (data.balance !== undefined) {
+        setBalance(Number(data.balance));
+        setTransactions(data.transactions || []);
+      } else {
+        console.error('No balance data received:', data);
+      }
     } catch (error) {
       console.error('Error fetching wallet data:', error);
+      toast.error('Failed to fetch wallet data');
+    }
+  };
+
+  const handleAddFunds = async (amount: number) => {
+    try {
+      const response = await fetch('/api/wallet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add funds');
+      }
+
+      toast.success(data.data.message);
+      // Refresh the wallet balance display
+      fetchBalanceAndTransactions();
+    } catch (error) {
+      console.error('Error adding funds:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to add funds');
     }
   };
 

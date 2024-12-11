@@ -71,38 +71,68 @@ export function BidDialog({
 
   const handleAcceptBid = async (bidId: string, amount: number) => {
     try {
-      const { error } = await supabase
-        .from('bid')
-        .update({ status: 'ACCEPTED' })
-        .eq('id', bidId);
-  
-      if (error) throw error;
-  
-      const { error: listingError } = await supabase
-        .from('listing')
-        .update({ 
-          curr_bid_amt: amount,
-          curr_bid_id: bidId
+      const response = await fetch('/api/bids/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bid_id: bidId,
+          listing_id: listingId,
+          amount
         })
-        .eq('id', listingId);
-  
-      if (listingError) throw listingError;
-  
-      toast.success('Bid accepted successfully', {
-        position: 'bottom-center'
       });
-      fetchBids();
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to accept bid');
+      }
+
+      toast.success('Bid accepted successfully');
+      await fetchBids();
+      onClose();
+
     } catch (error) {
       console.error('Error accepting bid:', error);
-      toast.error('Failed to accept bid', {
-        position: 'bottom-center'
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to accept bid');
     }
   };
 
   const getBidderName = (bid: Bid) => {
     const { first_name, last_name } = bid.bidder;
     return first_name && last_name ? `${first_name} ${last_name}` : 'Anonymous';
+  };
+
+  const handleSubmitBid = async (amount: number) => {
+    try {
+      const response = await fetch('/api/bids', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          listing_id: listingId,
+          amount,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit bid');
+      }
+
+      // Only update UI after successful response
+      await fetchBids();
+      toast.success('Bid placed successfully');
+      
+    } catch (error) {
+      console.error('Error submitting bid:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit bid', {
+        position: 'bottom-center',
+        duration: 3000,
+      });
+    }
   };
 
   return (
@@ -118,7 +148,7 @@ export function BidDialog({
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center">
                     <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                      {bid.bidder.first_name?.[0] || bid.bidder.email[0].toUpperCase()}
+                      {bid.bidder.first_name?.[0] || 'A'}
                     </span>
                   </div>
                   <div>
@@ -128,12 +158,21 @@ export function BidDialog({
                     <p className="text-sm text-gray-500">
                       by {getBidderName(bid)}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(bid.created_at).toLocaleString()}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-gray-500">
+                        {new Date(bid.created_at).toLocaleString()}
+                      </p>
+                      {bid.status !== 'PENDING' && (
+                        <span className={`text-xs px-2 py-0.5 rounded ${
+                          bid.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {bid.status}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                {isOwner && bid.status !== 'ACCEPTED' && (
+                {isOwner && bid.status === 'PENDING' && (
                   <Button 
                     onClick={() => setConfirmDialog({
                       isOpen: true,
@@ -156,7 +195,7 @@ export function BidDialog({
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
         onConfirm={() => handleAcceptBid(confirmDialog.bidId, confirmDialog.amount)}
         title="Accept Bid"
-        message={`Are you sure you want to accept this bid for $${confirmDialog.amount.toLocaleString()}? This action cannot be undone.`}
+        message={`Are you sure you want to accept this bid for $${confirmDialog.amount.toLocaleString()}? This action cannot be undone and will reject all other bids.`}
         confirmText="Accept Bid"
       />
     </>
