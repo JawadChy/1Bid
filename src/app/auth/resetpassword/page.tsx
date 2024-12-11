@@ -8,7 +8,7 @@ import Link from "next/link";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { ArrowLeft, Lock, Check } from "lucide-react";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ResetPassword() {
     const [formData, setFormData] = useState({
@@ -18,10 +18,31 @@ export default function ResetPassword() {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [isVerifying, setIsVerifying] = useState(true);
     const router = useRouter();
     const supabase = createClientComponentClient();
 
-    // TO DO: Need to have supabase redirect to this page
+    // Verify session on component mount
+    useEffect(() => {
+        const verifySession = async () => {
+            try {
+                // Verify we have a session
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    throw new Error('No session found');
+                }
+                setIsVerifying(false);
+            } catch (error) {
+                console.error('Session verification error:', error);
+                setError('Invalid or expired reset link. Please request a new password reset.');
+                // Redirect after showing error
+                setTimeout(() => router.push('/auth/forgotpassword'), 3000);
+            }
+        };
+
+        verifySession();
+    }, [router, supabase.auth]);
+
     useEffect(() => {
         if (isSuccess) {
             const timer = setTimeout(() => {
@@ -57,6 +78,12 @@ export default function ResetPassword() {
         try {
             setIsLoading(true);
 
+            // Verify session before updating password
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                throw new Error('No active session found');
+            }
+
             const { error } = await supabase.auth.updateUser({
                 password: formData.newPassword
             });
@@ -71,6 +98,16 @@ export default function ResetPassword() {
             setIsLoading(false);
         }
     };
+
+    if (isVerifying) {
+        return (
+            <div className="min-h-screen flex justify-center items-center">
+                <div className="text-center">
+                    <p className="text-gray-600 dark:text-gray-400">Verifying reset link...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex justify-center items-center relative">
