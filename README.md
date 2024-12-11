@@ -31,7 +31,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/JawadChy/1Bid">
-    <img src="src/assets/1Bid_logo.png" alt="Logo" width="80" height="80">
+    <img src="src/assets/1Bid_logo.png" alt="Logo" width="120" height="80">
   </a>
 
 <h3 align="center">1Bid</h3>
