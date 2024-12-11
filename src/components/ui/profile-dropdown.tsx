@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Wallet, ChevronDown, Settings, Plus, LogOut, ListIcon } from "lucide-react";
+import { Wallet, ChevronDown, Settings, Plus, LogOut, ListIcon, LayoutDashboard } from "lucide-react";
 import { Button } from "./button";
 import Link from "next/link";
 
@@ -19,6 +19,7 @@ interface UserProfile {
   id: string;
   first_name: string;
   last_name: string;
+  role: string;
 }
 
 interface UserProfileDropdownProps {
@@ -35,7 +36,7 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
       try {
         const { data, error } = await supabase
           .from("profile")
-          .select("id, first_name, last_name")
+          .select("id, first_name, last_name, role")
           .eq("id", user.id)
           .single();
 
@@ -98,12 +99,21 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
           <span className="text-sky-600 dark:text-sky-400">Wallet</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem asChild>
-          <Link href="/mylistings" className="w-full cursor-pointer">
-            <ListIcon className="mr-2 h-4 w-4 text-violet-600 dark:text-violet-400" />
-            <span className="text-violet-600 dark:text-violet-400">My Listings</span>
-          </Link>
-        </DropdownMenuItem>
+        {profile?.role === 'S' ? (
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard" className="w-full cursor-pointer">
+              <LayoutDashboard className="mr-2 h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <span className="text-amber-600 dark:text-amber-400">Dashboard</span>
+            </Link>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem asChild>
+            <Link href="/mylistings" className="w-full cursor-pointer">
+              <ListIcon className="mr-2 h-4 w-4 text-violet-600 dark:text-violet-400" />
+              <span className="text-violet-600 dark:text-violet-400">My Listings</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuSeparator />
 
