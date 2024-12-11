@@ -36,7 +36,7 @@
 <h3 align="center">1Bid</h3>
 
   <p align="center">
-    Shop for goods 1Bid at a time
+    Shop for goods, 1Bid at a time
     <br />
     <a href="https://github.com/JawadChy/1Bid"><strong>Explore the docs »</strong></a>
     <br />
