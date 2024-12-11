@@ -51,6 +51,16 @@ export default function SignIn() {
             <Input required name="password" id="password" placeholder="••••••••" type="password" />
           </LabelInputContainer>
 
+          {/* Forgot Password Link */}
+          <div className="flex justify-end mb-6">
+            <Link
+              href="/auth/forgotpassword"
+              className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
           <button
             className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-9 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
             type="submit"

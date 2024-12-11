@@ -45,11 +45,11 @@ export default function SignUp() {
 
   const handleVerificationSubmit = async () => {
     const correctAnswer = currentQuestion.num1 + currentQuestion.num2;
-    
+
     if (parseInt(arithmeticAnswer) === correctAnswer) {
       setShowVerification(false);
       setLoading(true);
-      
+
       try {
         const form = document.querySelector('form');
         if (form) {
