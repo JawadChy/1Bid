@@ -14,6 +14,9 @@ import { createClient } from "@/lib/supabase/client";
 import { Toaster, toast } from "react-hot-toast";
 import { OfferDialog } from "@/components/offer-dia";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from '@/app/auth/auth-context';
+import { ConfirmRatingDialog } from "@/components/ui/confirm-rating-dialog";
+import { Button } from "@/components/ui/button";
 
 interface ListingData {
   id: string;
@@ -37,9 +40,13 @@ interface ListingData {
   buyer_id?: string;
   sold_at?: string;
   sold_price?: number;
+  seller_rating?: number;
+  buyer_rating?: number;
+  isOwner: boolean;
 }
 
 export default function ListingPage() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const supabase = createClient();
@@ -47,7 +54,6 @@ export default function ListingPage() {
   const [listingData, setListingData] = useState<ListingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isOwner, setIsOwner] = useState(false);
   const [showBidHistory, setShowBidHistory] = useState(false);
   const [showOfferHistory, setShowOfferHistory] = useState(false);
 
@@ -57,6 +63,8 @@ export default function ListingPage() {
   const [minOfferPrice, setMinOfferPrice] = useState<number>(0);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const hasLoggedViewRef = useRef(false);
+  const [selectedRating, setSelectedRating] = useState<number>(5);
+  const [showRatingConfirm, setShowRatingConfirm] = useState(false);
 
   useEffect(() => {
     if (!id || hasLoggedViewRef.current) return; // Prevent duplicate calls with useRef because Next.js rerenders 
@@ -122,19 +130,6 @@ export default function ListingPage() {
   useEffect(() => {
     fetchListingData();
   }, [fetchListingData]);
-
-  // Check ownership
-  useEffect(() => {
-    const checkOwnership = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session && listingData) {
-        setIsOwner(session.user.id === listingData.seller_id);
-      }
-    };
-    checkOwnership();
-  }, [listingData, supabase.auth]);
 
   // Real-time updates subscription
   useEffect(() => {
@@ -233,6 +228,7 @@ export default function ListingPage() {
     end_time,
     curr_bid_amt,
     rent,
+    isOwner
   } = listingData;
 
   const isAuction = listing_type === "BID";
@@ -369,6 +365,34 @@ export default function ListingPage() {
   };
     
 
+  const handleRating = async (type: 'buyer' | 'seller') => {
+    try {
+      const response = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          listing_id: id,
+          rating: selectedRating,
+          rated_id: type === 'seller' ? listingData.seller_id : listingData.buyer_id
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to submit rating');
+      }
+
+      toast.success('Rating submitted successfully');
+      await fetchListingData(); // Refresh the listing data
+
+    } catch (error) {
+      console.error('Rating error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit rating');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 dark:from-zinc-900 dark:to-zinc-800 py-12">
       <Toaster 
@@ -441,7 +465,7 @@ export default function ListingPage() {
                 </div>
 
                 {/* Price Info */}
-                <div className="rounded-3xl bg-white/50 dark:bg-zinc-800/50 backdrop-blur-md">
+                <div className="rounded-3xl bg-white/50 dark:bg-zinc-800/50">
                   <div className="p-6">
                     <div className="flex justify-between items-center mb-4">
                       <div>
@@ -567,6 +591,82 @@ export default function ListingPage() {
                 </div>
               </div>
             </motion.div>
+
+            {listingData.status === 'SOLD' && (user?.id === listingData.buyer_id || user?.id === listingData.seller_id) && (
+              <div className="mb-8 p-6 rounded-lg bg-white/50 dark:bg-zinc-800/50">
+                <h3 className="text-xl font-semibold mb-4">Rating</h3>
+                
+                {user?.id === listingData.buyer_id && (
+                  <div className="space-y-4">
+                    {!listingData.seller_rating ? (
+                      <>
+                        <p className="text-sm text-gray-500">Rate the seller (1-5)</p>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="number"
+                            min={1}
+                            max={5}
+                            step={0.5}
+                            value={selectedRating}
+                            onChange={(e) => setSelectedRating(Number(e.target.value))}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-3xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
+                          />
+                          <Button 
+                            onClick={() => setShowRatingConfirm(true)}
+                            className="ml-4"
+                          >
+                            Submit
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center text-gray-600 dark:text-gray-300">
+                        You rated the seller {listingData.seller_rating} stars
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {user?.id === listingData.seller_id && (
+                  <div className="space-y-4">
+                    {!listingData.buyer_rating ? (
+                      <>
+                        <p className="text-sm text-gray-500">Rate the buyer (1-5)</p>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="number"
+                            min={1}
+                            max={5}
+                            step={0.5}
+                            value={selectedRating}
+                            onChange={(e) => setSelectedRating(Number(e.target.value))}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-3xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
+                          />
+                          <Button 
+                            onClick={() => setShowRatingConfirm(true)}
+                            className="ml-4"
+                          >
+                            Submit
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center text-gray-600 dark:text-gray-300">
+                        You rated the buyer {listingData.buyer_rating} stars
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <ConfirmRatingDialog
+                  isOpen={showRatingConfirm}
+                  onClose={() => setShowRatingConfirm(false)}
+                  onConfirm={() => handleRating(user?.id === listingData.buyer_id ? 'seller' : 'buyer')}
+                  rating={selectedRating}
+                  type={user?.id === listingData.buyer_id ? 'seller' : 'buyer'}
+                />
+              </div>
+            )}
 
             {/* Comments Section */}
             {id && <Comments listingId={id} />}

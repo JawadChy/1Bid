@@ -14,7 +14,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: listings, error } = await supabase
+    // Get listings where user is seller
+    const { data: sellerListings, error: sellerError } = await supabase
       .from('listing')
       .select(`
         *,
@@ -33,18 +34,43 @@ export async function GET() {
       .eq('seller_id', user.id)
       .order('created_at', { ascending: false });
 
-    // error handle
-    // dont left join...
-    if (error) {
-      console.error('Error fetching listings:', error);
+    // Get listings where user is buyer
+    const { data: purchasedListings, error: buyerError } = await supabase
+      .from('listing')
+      .select(`
+        *,
+        listing_image (
+          public_url
+        ),
+        bid_listing (
+          starting_price,
+          curr_bid_amt,
+          end_time
+        ),
+        buy_now_listing (
+          asking_price
+        )
+      `)
+      .eq('status', 'SOLD')
+      .eq('buyer_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (sellerError || buyerError) {
+      console.error('Error fetching listings:', sellerError || buyerError);
       return NextResponse.json(
         { error: "Failed to fetch listings" },
         { status: 500 }
       );
     }
 
+    // Combine and mark purchased listings
+    const purchasedWithStatus = purchasedListings?.map(listing => ({
+      ...listing,
+      status: 'PURCHASED'
+    })) || [];
+
     return NextResponse.json({
-      listings: listings || []
+      listings: [...(sellerListings || []), ...purchasedWithStatus]
     });
 
   } catch (error) {

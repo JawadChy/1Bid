@@ -62,6 +62,31 @@ export function BidDialog({
       return;
     }
 
+    const { data: listing } = await supabase
+      .from('listing')
+      .select('status, buyer_id')
+      .eq('id', listingId)
+      .single();
+
+    if (listing?.status === 'SOLD') {
+      const { data: transaction } = await supabase
+        .from('transaction')
+        .select('amount')
+        .eq('listing_id', listingId)
+        .eq('type', 'PURCHASE')
+        .single();
+
+      if (transaction) {
+        bidData?.forEach(bid => {
+          if (bid.bidder_id === listing.buyer_id && bid.amount === transaction.amount) {
+            bid.status = 'ACCEPTED';
+          } else if (bid.status === 'PENDING') {
+            bid.status = 'REJECTED';
+          }
+        });
+      }
+    }
+
     setBids(bidData || []);
   };
 
@@ -122,7 +147,6 @@ export function BidDialog({
         throw new Error(data.error || 'Failed to submit bid');
       }
 
-      // Only update UI after successful response
       await fetchBids();
       toast.success('Bid placed successfully');
       

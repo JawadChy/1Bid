@@ -1,121 +1,92 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+interface Rating {
+  rating: number;
+  rated_id: string;
+  rater_id: string;
+}
+
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const id = searchParams.get('id') // Retrieve the id from query parameters
-  
-  if (!id) {
-    return NextResponse.json(
-      { error: 'Listing id needed' },
-      { status: 400 }
-    )
-  }
-
-  const supabase = await createClient()
-
   try {
+    const supabase = await createClient();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
 
-    const { data: listing, error: listingError } = await supabase
+    if (!id) {
+      return NextResponse.json({ error: 'Missing listing ID' }, { status: 400 });
+    }
+
+    // curr user
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: listing, error } = await supabase
       .from('listing')
       .select(`
-        id,
-        title,
-        description,
-        category,
-        listing_type,
-        created_at,
-        updated_at,
-        item_or_service,
-        views,
-        rent,
-        status,
-        seller_id
+        *,
+        bid_listing (
+          starting_price,
+          end_time,
+          curr_bid_amt,
+          min_bid_increment
+        ),
+        buy_now_listing (
+          asking_price,
+          min_offer_price
+        ),
+        listing_image!inner (
+          public_url
+        ),
+        rating!listing_id (
+          rating,
+          rater_id,
+          rated_id
+        )
       `)
       .eq('id', id)
-      .single()
+      .eq('listing_image.position', 1)
+      .single();
 
-    if (listingError || !listing) {
-      return NextResponse.json(
-        { error: 'Listing not found' },
-        { status: 404 }
-      )
+    if (error) {
+      throw error;
     }
 
-    // Fetch both bid_listing and buy_now_listing data
-    const { data: bidListing, error: bidError } = await supabase
-      .from('bid_listing')
-      .select(`
-        starting_price,
-        curr_bid_amt,
-        end_time,
-        min_bid_increment
-      `)
-      .eq('listing_id', id)
-      .single()
+    let processedListing = { ...listing };
 
-    const { data: buyNowListing, error: buyNowError } = await supabase
-      .from('buy_now_listing')
-      .select(`
-        asking_price,
-        min_offer_price
-      `)
-      .eq('listing_id', id)
-      .single()
-
-
-    if (bidError && buyNowError) {
-      return NextResponse.json(
-        { error: 'Neither bid nor buy now listing found' },
-        { status: 404 }
-      )
-    }
-
-    // Listing Image
-    const { data: listingImage, error: imageError } = await supabase
-      .from('listing_image')
-      .select('public_url')
-      .eq('listing_id', id)
-
-    if (imageError || !listingImage || listingImage.length === 0) {
-      return NextResponse.json(
-        { error: 'Listing images not found' },
-        { status: 404 }
-      )
-    }
-
-    // Determine the price and additional info based on listing type
-    let finalPrice = null;
-    let additionalInfo = {};
-
+    // getting price based on listing type
     if (listing.listing_type === 'BID') {
-      finalPrice = bidListing?.curr_bid_amt || bidListing?.starting_price;
-      additionalInfo = {
-        min_bid_increment: bidListing?.min_bid_increment,
-        end_time: bidListing?.end_time
-      }
-    } else if (listing.listing_type === 'BUY_NOW') {
-      finalPrice = buyNowListing?.asking_price;
-      additionalInfo = {
-        min_offer_price: buyNowListing?.min_offer_price
-      }
+      processedListing.price = listing.bid_listing?.[0]?.curr_bid_amt || listing.bid_listing?.[0]?.starting_price;
+      processedListing.min_bid_increment = listing.bid_listing?.[0]?.min_bid_increment;
+      processedListing.end_time = listing.bid_listing?.[0]?.end_time;
+    } else {
+      processedListing.price = listing.buy_now_listing?.[0]?.asking_price;
+      processedListing.min_offer_price = listing.buy_now_listing?.[0]?.min_offer_price;
     }
 
-    const finalListing = {
-      ...listing,
-      price: finalPrice,
-      imageUrl: listingImage[0].public_url,  
-      ...additionalInfo 
+    // Add the image URL
+    processedListing.imageUrl = listing.listing_image[0].public_url;
+
+    // Process ratings if the listing is sold
+    if (listing.status === 'SOLD' && listing.rating) {
+      const ratings = listing.rating;
+      processedListing.seller_rating = ratings.find(
+        (r: Rating) => r.rated_id === listing.seller_id
+      )?.rating;
+      processedListing.buyer_rating = ratings.find(
+        (r: Rating) => r.rated_id === listing.buyer_id
+      )?.rating;
     }
 
-    return NextResponse.json({
-      listing: finalListing
-    })
+    // Add isOwner flag
+    processedListing.isOwner = user?.id === listing.seller_id;
+
+    return NextResponse.json({ listing: processedListing });
+
   } catch (error) {
-    console.error('Search error:', error)
+    console.error('Error fetching listing:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch listing' },
+      { error: 'Failed to fetch listing' },
       { status: 500 }
-    )
+    );
   }
 }
