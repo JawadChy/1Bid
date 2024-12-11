@@ -36,7 +36,7 @@
 <h3 align="center">1Bid</h3>
 
   <p align="center">
-    project_description
+    Shop for goods 1Bid at a time
     <br />
     <a href="https://github.com/JawadChy/1Bid"><strong>Explore the docs »</strong></a>
     <br />
@@ -51,10 +51,7 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
-Here's a blank template to get started. To avoid retyping too much info, do a search and replace with your text editor for the following: `github_username`, `repo_name`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `project_title`, `project_description`, `project_license`
+A bidding website allowing users to bid for various items they need.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -102,6 +99,13 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### Additional Notes
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 
 <!-- DEPLOYMENT -->
 ## Deploy on Vercel
@@ -109,13 +113,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-### Additional Notes
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
