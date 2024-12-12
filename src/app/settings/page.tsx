@@ -150,6 +150,7 @@ export default function SettingsPage() {
             <CardContent>
                 <div className="space-y-4">
                     <p className="text-sm text-gray-500">
+
                         Apply to become a Super User to access additional administrative features
                     </p>
                     <Button className="w-full">
