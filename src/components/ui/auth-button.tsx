@@ -21,15 +21,11 @@ export function AuthButton({ user, loading }: AuthButtonProps) {
 
   if (!user) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        asChild
-      >
-        <Link href="/auth/signin">
-          Sign In
-        </Link>
-      </Button>
+      <Link href="/auth/signup">
+        <Button variant="expandIcon" Icon={LogIn} iconPlacement="right">
+          Get Started
+        </Button>
+      </Link>
     );
   }
 
