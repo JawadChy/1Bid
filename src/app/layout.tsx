@@ -4,7 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { AuthProvider } from "./auth/auth-context";
 import { Toaster } from "react-hot-toast";
-import { SuspensionCheck } from "@/components/suspension-check";
+import { AuthStatusCheck } from "@/components/auth-status-check";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -35,7 +35,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Providers>
-            <SuspensionCheck>{children}</SuspensionCheck>
+            <AuthStatusCheck>{children}</AuthStatusCheck>
           </Providers>
           <Toaster position="bottom-center" />
         </AuthProvider>
