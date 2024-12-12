@@ -33,6 +33,7 @@ export function OfferDialog({
   onClose: () => void;
 }) {
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [isVip, setIsVip] = useState(false);
   const supabase = createClient();
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -93,6 +94,24 @@ export function OfferDialog({
   useEffect(() => {
     fetchOffers();
   }, [listingId]);
+
+  useEffect(() => {
+    // Check if user is VIP
+    const checkVipStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profile')
+        .select('is_vip')
+        .eq('id', user.id)
+        .single();
+
+      setIsVip(!!profile?.is_vip);
+    };
+
+    checkVipStatus();
+  }, []);
 
   const handleAcceptOffer = async (offerId: string, amount: number) => {
     try {

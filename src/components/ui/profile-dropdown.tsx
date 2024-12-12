@@ -74,6 +74,16 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
+        {profile?.is_vip && (
+          <>
+            <DropdownMenuLabel className="flex items-center gap-2">
+              VIP Member 👑
+              <span className="text-xs text-muted-foreground">(10% off)</span>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        
         <div className="flex items-center gap-4 p-2">
           <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
             <span className="text-base font-medium text-blue-600 dark:text-blue-400">
@@ -135,13 +145,6 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>
         </DropdownMenuItem>
-
-        {profile?.is_vip && (
-          <>
-            <DropdownMenuLabel>VIP 👑</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
