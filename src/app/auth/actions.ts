@@ -46,17 +46,17 @@ export async function signup(formData: FormData) {
     fN: formData.get('firstname') as string,
     lN: formData.get('lastname') as string,
   }
-  
+
   // sign up user
   const { data: authData, error } = await supabase.auth.signUp(data)
 
   if (error) {
     console.error(error);
   }
-  
+
   const userID = authData.user?.id;
 
-  {/* disabled rls for profle table, figure out rls poliicies later and work it out, this is a temp fix.*/}
+  {/* disabled rls for profle table, figure out rls poliicies later and work it out, this is a temp fix.*/ }
   const { error: profileError } = await supabase
     .from('profile')
     .insert([
@@ -68,12 +68,47 @@ export async function signup(formData: FormData) {
       }
     ])
 
-    if (profileError) {
-      console.error('Profile Creation error:', profileError)
-    }
+  if (profileError) {
+    console.error('Profile Creation error:', profileError)
+  }
 
-    // if (!error && !profileError) {
-    //   revalidatePath('/', 'layout')
-    //   redirect('/')
-    // }
+  // if (!error && !profileError) {
+  //   revalidatePath('/', 'layout')
+  //   redirect('/')
+  // }
 }
+
+// SuspensionCheck function
+/*
+const handleSuspensionCheck = async (supabase: any) => {
+  try {
+    // Get the current user's profile
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Get the user's profile details
+    const { data: profile, error } = await supabase
+      .from('profile')
+      .select('suspension_count')
+      .eq('id', user.id)
+      .single();
+
+    if (error) throw error;
+
+    // Check if suspension count is 3
+    if (profile.suspension_count >= 3) {
+      // Delete the user's account
+      const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
+      if (deleteError) throw deleteError;
+
+      // Sign out the user
+      await supabase.auth.signOut();
+
+      // Redirect to banned page
+      window.location.href = '/auth/signin/banned';
+    }
+  } catch (error) {
+    console.error('Error checking suspension:', error.message);
+  }
+}
+*/
+
