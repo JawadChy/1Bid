@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { SuspendedUserView } from "./suspended-user-view";
+import { usePathname } from 'next/navigation';
 
 interface SuspensionCheckProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ export function SuspensionCheck({ children }: SuspensionCheckProps) {
   const [isSuspended, setIsSuspended] = useState(false);
   const [suspensionCount, setSuspensionCount] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const pathname = usePathname();
   const supabase = createClient();
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function SuspensionCheck({ children }: SuspensionCheckProps) {
     checkSuspension();
   }, []);
 
-  if (isSuspended && userId) {
+  if (isSuspended && userId && pathname !== '/wallet') {
     return <SuspendedUserView suspensionCount={suspensionCount} userId={userId} />;
   }
 
