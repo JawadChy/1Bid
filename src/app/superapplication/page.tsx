@@ -1,7 +1,11 @@
-'use client'
-import React, { useState } from 'react';
-import { motion } from "framer-motion";
-import { AlertTriangle } from "lucide-react";
+"use client";
+import React, { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 
 interface FormData {
     title: string;
@@ -15,7 +19,8 @@ interface FormData {
     alternativeEmail?: string;
 }
 
-export default function SuperuserApplication() {
+export default function SuperUserApplication() {
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<FormData>({
         title: "",
         firstName: "",
@@ -29,7 +34,12 @@ export default function SuperuserApplication() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log(formData);
+        setLoading(true);
+        // Simulate API call
+        setTimeout(() => {
+            console.log(formData);
+            setLoading(false);
+        }, 1000);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -41,107 +51,193 @@ export default function SuperuserApplication() {
     };
 
     return (
-        <div className="min-h-screen bg-gray from-gray-100 via-slate-900 to-gray-300">
-            <div className="container mx-auto px-4 py-12">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="max-w-4xl mx-auto backdrop-blur-xl bg-gray-900/50 rounded-3xl p-8 shadow-2xl border border-gray-800"
-                >
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-100 text-center mb-8">
-                        SuperUser Application
-                    </h1>
+        <div className="min-h-screen flex justify-center items-center relative bg-white dark:bg-black">
+            <Link
+                href="/settings"
+                className="absolute top-4 left-4 flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors"
+            >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to Settings</span>
+            </Link>
 
-                    <div className="mb-8 bg-red-950/30 border border-red-500/20 p-4 rounded-xl">
-                        <div className="flex items-center gap-3">
-                            <AlertTriangle className="h-5 w-5 text-red-400" />
-                            <p className="text-gray-300">
-                                Important Notice: Superusers can only perform administrative actions and cannot participate in regular platform activities.
-                            </p>
-                        </div>
+            <div className="max-w-4xl w-full mx-auto rounded-lg p-4 md:p-8 shadow-input bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
+                <TextHoverEffect text="1Bid" />
+
+                <div className="my-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-500/20 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
+                        <p className="text-red-700 dark:text-red-300">
+                            Important Notice: Superusers can only perform administrative actions and cannot participate in regular platform activities.
+                        </p>
                     </div>
+                </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-6">
-                                <h2 className="text-xl font-semibold text-gray-200">
-                                    General Information
-                                </h2>
+                <form onSubmit={handleSubmit} className="my-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-semibold dark:text-gray-200">
+                                General Information
+                            </h2>
+
+                            <LabelInputContainer>
+                                <Label htmlFor="title">Title</Label>
                                 <select
                                     name="title"
+                                    id="title"
                                     value={formData.title}
                                     onChange={handleChange}
-                                    className="w-full p-3 bg-gray-800/50 border border-gray-700 rounded-xl text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-all"
+                                    className="w-full p-3 rounded-md bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-gray-800"
                                 >
                                     <option value="">Select Title</option>
                                     <option value="mr">Mr.</option>
                                     <option value="ms">Ms.</option>
                                     <option value="dr">Dr.</option>
                                 </select>
-                                {["firstName", "lastName", "username", "referredby"].map((field) => (
-                                    <input
-                                        key={field}
-                                        type="text"
-                                        name={field}
-                                        placeholder={field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1').trim()}
-                                        value={formData[field as keyof FormData]}
-                                        onChange={handleChange}
-                                        className="w-full p-3 bg-gray-800/50 border border-gray-700 rounded-xl text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-all"
-                                    />
-                                ))}
-                            </div>
+                            </LabelInputContainer>
 
-                            <div className="space-y-6">
-                                <h2 className="text-xl font-semibold text-gray-200">
-                                    Contact Details
-                                </h2>
+                            <LabelInputContainer>
+                                <Label htmlFor="firstName">First Name</Label>
+                                <Input
+                                    required
+                                    id="firstName"
+                                    name="firstName"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    placeholder="John"
+                                />
+                            </LabelInputContainer>
+
+                            <LabelInputContainer>
+                                <Label htmlFor="lastName">Last Name</Label>
+                                <Input
+                                    required
+                                    id="lastName"
+                                    name="lastName"
+                                    value={formData.lastName}
+                                    onChange={handleChange}
+                                    placeholder="Doe"
+                                />
+                            </LabelInputContainer>
+
+                            <LabelInputContainer>
+                                <Label htmlFor="username">Username</Label>
+                                <Input
+                                    required
+                                    id="username"
+                                    name="username"
+                                    value={formData.username}
+                                    onChange={handleChange}
+                                    placeholder="johndoe123"
+                                />
+                            </LabelInputContainer>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-semibold dark:text-gray-200">
+                                Contact Details
+                            </h2>
+
+                            <LabelInputContainer>
+                                <Label htmlFor="country">Country</Label>
                                 <select
                                     name="country"
+                                    id="country"
                                     value={formData.country}
                                     onChange={handleChange}
-                                    className="w-full p-3 bg-gray-800/50 border border-gray-700 rounded-xl text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-all"
+                                    className="w-full p-3 rounded-md bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-gray-800"
                                 >
                                     <option value="">Select Country</option>
                                     <option value="us">United States</option>
                                     <option value="uk">United Kingdom</option>
                                     <option value="ca">Canada</option>
                                 </select>
-                                {["phone", "email", "alternativeEmail"].map((field) => (
-                                    <input
-                                        key={field}
-                                        type={field.includes('email') ? 'email' : 'text'}
-                                        name={field}
-                                        placeholder={field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1').trim()}
-                                        value={formData[field as keyof FormData] || ''}
-                                        onChange={handleChange}
-                                        className="w-full p-3 bg-gray-800/50 border border-gray-700 rounded-xl text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-all"
-                                    />
-                                ))}
-                            </div>
+                            </LabelInputContainer>
+
+                            <LabelInputContainer>
+                                <Label htmlFor="phone">Phone Number</Label>
+                                <Input
+                                    required
+                                    id="phone"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    placeholder="+1 (555) 000-0000"
+                                />
+                            </LabelInputContainer>
+
+                            <LabelInputContainer>
+                                <Label htmlFor="email">Email Address</Label>
+                                <Input
+                                    required
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="john.doe@example.com"
+                                />
+                            </LabelInputContainer>
+
+                            <LabelInputContainer>
+                                <Label htmlFor="referredby">Referred By</Label>
+                                <Input
+                                    id="referredby"
+                                    name="referredby"
+                                    value={formData.referredby}
+                                    onChange={handleChange}
+                                    placeholder="Referrer's username"
+                                />
+                            </LabelInputContainer>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6 mt-8">
+                        <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+                            <input
+                                type="checkbox"
+                                id="terms"
+                                required
+                                className="rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-zinc-900 text-blue-500"
+                            />
+                            <label htmlFor="terms" className="text-gray-600 dark:text-gray-400">
+                                I accept the Terms and Conditions and understand the responsibilities of being a Superuser.
+                            </label>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-3 p-4 bg-gray-800/50 border border-gray-700 rounded-xl">
-                                <input
-                                    type="checkbox"
-                                    id="terms"
-                                    className="rounded border-gray-600 bg-gray-800/50 text-blue-500 focus:ring-blue-500/20 h-5 w-5"
-                                />
-                                <label htmlFor="terms" className="text-gray-300">
-                                    I accept the Terms and Conditions of your site.
-                                </label>
-                            </div>
-                            <button
-                                type="submit"
-                                className="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-blue-700 transition-all focus:ring-2 focus:ring-blue-500/50"
-                            >
-                                Register Badge
-                            </button>
-                        </div>
-                    </form>
-                </motion.div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-9 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
+                        >
+                            {loading ? "Submitting..." : "Submit Application →"}
+                            <BottomGradient />
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );
 }
+
+const BottomGradient = () => {
+    return (
+        <>
+            <span className="group-hover/btn:opacity-100 block transition duration-500 opacity-0 absolute h-px w-full -bottom-px inset-x-0 bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
+            <span className="group-hover/btn:opacity-100 blur-sm block transition duration-500 opacity-0 absolute h-px w-1/2 mx-auto -bottom-px inset-x-10 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
+        </>
+    );
+};
+
+const LabelInputContainer = ({
+    children,
+    className,
+}: {
+    children: React.ReactNode;
+    className?: string;
+}) => {
+    return (
+        <div className={cn("flex flex-col space-y-2 w-full", className)}>
+            {children}
+        </div>
+    );
+};

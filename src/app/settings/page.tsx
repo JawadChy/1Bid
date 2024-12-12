@@ -154,7 +154,10 @@ export default function SettingsPage() {
                         Apply to become a Super User to access additional administrative features
                     </p>
                     <Button className="w-full">
-                        <Link href="/superapplication">
+                        <Link
+                            href="/superapplication"
+                            className="w-full inline-block"
+                        >
                             Apply to be a Super User
                         </Link>
                     </Button>
