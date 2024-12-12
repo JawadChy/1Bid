@@ -121,10 +121,10 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild>
-          <Link href="/settings" className="flex w-full items-center cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Account Settings</span>
+        <DropdownMenuItem className="cursor-pointer">
+        <Link href="/settings" className="w-full cursor-pointer">
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Account Settings</span>
           </Link>
         </DropdownMenuItem>
 

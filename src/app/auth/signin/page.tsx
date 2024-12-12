@@ -75,7 +75,9 @@ export default function SignIn() {
           {`Don't have an account?`}{" "}
           <Link
             href="/auth/signup"
-            className="text-blue-500 hover:text-blue-600"
+            className="text-blue-500 hover:text-blue-600 transition-none"
+            prefetch={true}
+            replace
           >
             Sign up
           </Link>
