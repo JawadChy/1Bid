@@ -4,7 +4,7 @@ export const protectedPaths = [
     "/superapplication", 
     "/settings", 
     "/wallet", 
-    "createlisting"
+    "/createlisting"
 ]
 {/* TODO: change auth to (auth) and export authPaths */}
 // export const authPaths = ["/signup", "/signin", "/confirm"]
