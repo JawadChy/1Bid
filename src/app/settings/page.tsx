@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut } from 'lucide-react';
+import { LogOut, ArrowLeft } from 'lucide-react';
+
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -180,10 +181,18 @@ export default function SettingsPage() {
         }
     };
 
+    // Any component stays within the 3 tabs
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8">
-            <h1 className="text-3xl font-bold">Settings</h1>
+            <Link
+                href="/"
+                className="absolute top-4 left-4 flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors"
+            >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to Home Page</span>
+            </Link>
 
+            <h1 className="text-3xl font-bold">Settings</h1>
             <div className="grid grid-cols-4 gap-8">
                 {/* Sidebar Navigation */}
                 <div className="col-span-1 space-y-2">
