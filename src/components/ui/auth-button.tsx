@@ -7,30 +7,31 @@ import { ProfileDropdown } from './profile-dropdown';
 import { Button } from './button';
 import { LogIn } from 'lucide-react';
 
-export const AuthButton = () => {
-  const { user, signOut } = useAuth();
-  const router = useRouter();
+interface AuthButtonProps {
+  user: any;
+  loading: boolean;
+}
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
-  if (!user) {
+export function AuthButton({ user, loading }: AuthButtonProps) {
+  if (loading) {
     return (
-        <Link href="/auth/signup">
-            <Button variant="expandIcon" Icon={LogIn} iconPlacement="right">
-                    Get Started
-            </Button>
-        </Link>
+      <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-800 animate-pulse" />
     );
   }
 
-  return (
-    <ProfileDropdown user={user}></ProfileDropdown>
-  );
-};
+  if (!user) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        asChild
+      >
+        <Link href="/auth/signin">
+          Sign In
+        </Link>
+      </Button>
+    );
+  }
+
+  return <ProfileDropdown user={user} />;
+}

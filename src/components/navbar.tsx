@@ -55,25 +55,41 @@ export const Navbar = ({ animated = true }: { animated?: boolean }) => {
   };
 
   useEffect(() => {
-    console.log("navbar useEffect running");
-    // check initial auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let mounted = true;
 
-    // listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("auth state changed:", _event, session?.user?.id);
-      setUser(session?.user ?? null);
-    });
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
 
-    return () => {
-      console.log("navbar useEffect cleanup");
-      subscription.unsubscribe();
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (_event, session) => {
+            if (mounted) {
+              setUser(session?.user ?? null);
+              setLoading(false);
+            }
+          }
+        );
+
+        return () => {
+          mounted = false;
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error("Auth initialization error:", error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     };
+
+    initializeAuth();
   }, []);
 
   const navAnimation = animated ? {
@@ -111,6 +127,12 @@ export const Navbar = ({ animated = true }: { animated?: boolean }) => {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Pass loading state to AuthButton
+  const authButtonProps = {
+    user,
+    loading,
+  };
 
   return (
     <nav className="fixed top-0 w-full z-50">
@@ -188,7 +210,7 @@ export const Navbar = ({ animated = true }: { animated?: boolean }) => {
             {...fadeInAnimation}
             className="flex items-center justify-end gap-6"
           >
-            <AuthButton />
+            <AuthButton {...authButtonProps} />
 
             <div className="flex items-center gap-4 min-w-[120px]">
               <ThemeToggle />

@@ -23,12 +23,15 @@ export function AuthStatusCheck({ children }: AuthStatusCheckProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Check if user is banned
-      const { data: banData } = await supabase
+      const { data: banData, error: banError } = await supabase
         .from('ban')
-        .select('*')
+        .select('ban_id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (banError) {
+        console.error('Ban check error:', banError);
+      }
 
       if (banData) {
         setIsBanned(true);
@@ -36,11 +39,15 @@ export function AuthStatusCheck({ children }: AuthStatusCheckProps) {
       }
 
       // Check suspension status
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profile')
         .select('is_suspended, suspension_count')
         .eq('id', user.id)
         .single();
+
+      if (profileError) {
+        console.error('Profile check error:', profileError);
+      }
 
       if (profile) {
         setIsSuspended(profile.is_suspended);
