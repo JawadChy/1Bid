@@ -4,9 +4,10 @@ import { AuroraBackground } from "../components/ui/aurora-background";
 import { FlipWords } from "@/components/ui/flip-words";
 import { Navbar } from "@/components/navbar";
 import { TopAuctionCarousel, TopBuyNowCarousel } from "@/components/item-carousels";
+import Link from 'next/link' // Remove once we have a proper router
 
 export default function Home() {
-  {/* someone think of more words pls :) -jawad*/}
+  {/* someone think of more words pls :) -jawad*/ }
   const words = ["bid", "listing"];
 
   // mock listings
@@ -86,7 +87,7 @@ export default function Home() {
             <div className="text-4xl text-transparent bg-clip-text bg-gradient-to-b from-slate-900/80 to-slate-900/20 dark:from-white/80 dark:to-white/20 py-4 flex items-center gap-3">
               <span>One</span>
               <span className="font-bold inline-block min-w-[136px] text-center ">
-                <FlipWords words={words} hasGradient={true}/>
+                <FlipWords words={words} hasGradient={true} />
               </span>
               <span className="[word-spacing:10px]" >at   a  time.</span>
             </div>
@@ -97,6 +98,14 @@ export default function Home() {
           <TopBuyNowCarousel items={mockItems} />
         </div>
       </div>
+
+      {/* Ignore this, this is for Tim
+      <div className="flex items-center justify-center">
+        <button className="px-4 py-2 bg-blue-500 text-white rounded">
+          <Link href="./settings">Go to settings</Link>
+        </button>
+      </div>
+      */}
     </>
   );
 }
