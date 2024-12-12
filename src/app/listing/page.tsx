@@ -560,35 +560,21 @@ export default function ListingPage() {
                     {!isOwner && listingData.status === 'ACTIVE' && (
                       <div className="space-y-4 mt-6">
                         {isAuction && (
-                          <>
-                            <RainbowButton
-                              onClick={handleBidSubmit}
-                              className="w-full py-6"
-                            >
-                              Place Bid
-                            </RainbowButton>
-                            {isVip && (
-                              <p className="text-sm text-green-600 dark:text-green-400 text-center">
-                                As a VIP member, you'll receive a 10% discount if your bid is accepted! 🎉
-                              </p>
-                            )}
-                          </>
+                          <RainbowButton
+                            onClick={handleBidSubmit}
+                            className="w-full py-6"
+                          >
+                            Place Bid
+                          </RainbowButton>
                         )}
 
                         {isBuyNow && (
-                          <>
-                            <RainbowButton
-                              onClick={handleOfferSubmit}
-                              className="w-full py-6"
-                            >
-                              Make Offer
-                            </RainbowButton>
-                            {isVip && (
-                              <p className="text-sm text-green-600 dark:text-green-400 text-center">
-                                As a VIP member, you'll receive a 10% discount if your offer is accepted! 🎉
-                              </p>
-                            )}
-                          </>
+                          <RainbowButton
+                            onClick={handleOfferSubmit}
+                            className="w-full py-6"
+                          >
+                            Make Offer
+                          </RainbowButton>
                         )}
                       </div>
                     )}

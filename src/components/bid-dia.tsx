@@ -33,7 +33,6 @@ export function BidDialog({
   onClose: () => void;
 }) {
   const [bids, setBids] = useState<Bid[]>([]);
-  const [isVip, setIsVip] = useState(false);
   const supabase = createClient();
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -94,24 +93,6 @@ export function BidDialog({
   useEffect(() => {
     fetchBids();
   }, [listingId]);
-
-  useEffect(() => {
-    // Check if user is VIP
-    const checkVipStatus = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profile')
-        .select('is_vip')
-        .eq('id', user.id)
-        .single();
-
-      setIsVip(!!profile?.is_vip);
-    };
-
-    checkVipStatus();
-  }, []);
 
   const handleAcceptBid = async (bidId: string, amount: number) => {
     try {
