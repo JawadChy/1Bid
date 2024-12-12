@@ -19,15 +19,15 @@ export default function ItemCard({
   imageUrl,
   title,
   // description,
-  isAuction=true,
+  isAuction = true,
   price,
   bids = 0,
   timeLeft,
   bidCount = 0
 }: ItemCardProps) {
   return (
-    <div className="w-[360px] rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-zinc-900">
-      <div className=" rounded-3xl w-full aspect-square relative bg-slate-100	dark:bg-zinc-950">
+    <div className="w-[320px] rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-zinc-900">
+      <div className="rounded-3xl w-80 aspect-square relative bg-slate-100	dark:bg-zinc-950">
         <Image
           src={imageUrl}
           sizes="360px"

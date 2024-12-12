@@ -20,38 +20,87 @@ export default function ResetPassword() {
     const [isSuccess, setIsSuccess] = useState(false);
     const [isVerifying, setIsVerifying] = useState(true);
     const router = useRouter();
+    const searchParams = useSearchParams();
     const supabase = createClientComponentClient();
 
-    // Verify session on component mount
     useEffect(() => {
         const verifySession = async () => {
             try {
-                // Verify we have a session
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) {
-                    throw new Error('No session found');
+                // Get tokens from URL
+                const accessToken = searchParams.get('access_token');
+                const refreshToken = searchParams.get('refresh_token');
+                const type = searchParams.get('type');
+
+                if (!accessToken || type !== 'recovery') {
+                    throw new Error('Invalid recovery link');
                 }
+
+                // Try to exchange the tokens for a session
+                const { data: { session }, error: sessionError } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken || '',
+                });
+
+                if (sessionError || !session) {
+                    throw sessionError || new Error('Failed to establish session');
+                }
+
                 setIsVerifying(false);
             } catch (error) {
-                console.error('Session verification error:', error);
+                console.error('Verification error:', error);
                 setError('Invalid or expired reset link. Please request a new password reset.');
-                // Redirect after showing error
                 setTimeout(() => router.push('/auth/forgotpassword'), 3000);
             }
         };
 
         verifySession();
-    }, [router, supabase.auth]);
+    }, [router, supabase.auth, searchParams]);
 
-    useEffect(() => {
-        if (isSuccess) {
-            const timer = setTimeout(() => {
-                router.push('/auth/login');
-            }, 3000);
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setError(null);
 
-            return () => clearTimeout(timer);
+        if (!validateForm()) return;
+
+        try {
+            setIsLoading(true);
+
+            // Get current session to ensure we're still authenticated
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+            if (sessionError || !session) {
+                throw new Error('Your session has expired. Please request a new password reset.');
+            }
+
+            // Update the password
+            const { error: updateError } = await supabase.auth.updateUser({
+                password: formData.newPassword
+            });
+
+            if (updateError) throw updateError;
+
+            // Optional: Update the account_status in profile if you want to track password resets
+            const { error: profileError } = await supabase
+                .from('profile')
+                .update({
+                    account_status: 'active',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', session.user.id);
+
+            if (profileError) {
+                console.error('Profile update error:', profileError);
+                // Don't throw here - password was still reset successfully
+            }
+
+            setIsSuccess(true);
+        } catch (error) {
+            console.error('Reset error:', error);
+            setError(error instanceof Error ? error.message : 'An error occurred while resetting password');
+        } finally {
+            setIsLoading(false);
         }
-    }, [isSuccess, router]);
+    };
 
     const validateForm = () => {
         if (!formData.newPassword || !formData.confirmPassword) {
@@ -67,36 +116,6 @@ export default function ResetPassword() {
             return false;
         }
         return true;
-    };
-
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setError(null);
-
-        if (!validateForm()) return;
-
-        try {
-            setIsLoading(true);
-
-            // Verify session before updating password
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                throw new Error('No active session found');
-            }
-
-            const { error } = await supabase.auth.updateUser({
-                password: formData.newPassword
-            });
-
-            if (error) throw error;
-
-            setIsSuccess(true);
-        } catch (error) {
-            console.error('Error resetting password:', error);
-            setError(error instanceof Error ? error.message : 'An error occurred while resetting password');
-        } finally {
-            setIsLoading(false);
-        }
     };
 
     if (isVerifying) {
