@@ -19,15 +19,14 @@ export async function GET(request: NextRequest) {
           curr_bid_amt,
           curr_bid_id,
           min_bid_increment
-        ),
-        bid_count:bid!bid_listing(count)
+        )
       `)
       .eq('status', 'ACTIVE')
       .eq('listing_type', 'BID')
       .eq('listing_image.position', 1)
-      .gt('bid_listing.end_time', new Date().toISOString()) 
-      .order('curr_bid_amt', { foreignTable: 'bid_listing', ascending: false })
-      .limit(6);
+      .gt('views', 0)
+      .order('views', { ascending: false })
+      .limit(10);
 
     if (error) throw error;
 
@@ -37,8 +36,7 @@ export async function GET(request: NextRequest) {
       imageUrl: listing.listing_image.public_url,
       end_time: listing.bid_listing[0]?.end_time,
       curr_bid_amt: listing.bid_listing[0]?.curr_bid_amt,
-      min_bid_increment: listing.bid_listing[0]?.min_bid_increment,
-      bid_count: listing.bid_count?.[0]?.count || 0
+      min_bid_increment: listing.bid_listing[0]?.min_bid_increment
     }));
 
     return NextResponse.json({ listings: processedListings });
