@@ -94,10 +94,79 @@ export default function Home() {
             </div>
           </motion.div>
         </AuroraBackground>
+
         <div className="space-y-16 py-12">
           {/* Display auction and buy now carousels */}
           <TopAuctionCarousel items={auctionItems} />
           <TopBuyNowCarousel items={buyNowItems} />
+        </div>
+
+        {/* Display auction and buy-now items in grid layout */}
+        <div className="py-12 px-4">
+          <h2 className="text-3xl font-semibold mb-8 text-center">Most Viewed Items</h2>
+
+          {/* Container for items with external margin */}
+          <div className="container mx-auto px-8">
+            {/* Horizontal scrolling container */}
+            <div className="flex flex-wrap justify-center gap-8">
+              {/* Display Buy Now Items */}
+              {buyNowItems.length > 0 && (
+                <div className="flex flex-wrap gap-8 justify-center w-full">
+                  <h3 className="text-2xl font-bold mb-4 text-black w-full text-center">Buy Now</h3>
+                  <div className="flex flex-wrap justify-center gap-8">
+                    {buyNowItems.map((item: any, index: number) => (
+                      <div
+                        key={index}
+                        className="bg-white shadow-lg rounded-lg overflow-hidden w-72 sm:w-80 md:w-96"
+                      >
+                        <img
+                          src={item.imageUrl || "/placeholder.jpg"} // Use a placeholder if no image
+                          alt={item.title}
+                          className="w-full h-64 object-cover"
+                        />
+                        <div className="p-4">
+                          <h4 className="text-xl font-semibold text-black">{item.title}</h4>
+                          <p className="text-black">{item.views} views</p>
+                          <p className="text-lg font-bold mt-2 text-black">${item.price}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Display Auction Items */}
+              {auctionItems.length > 0 && (
+                <div className="flex flex-wrap gap-8 justify-center w-full">
+                  <h3 className="text-2xl font-bold mb-4 text-black w-full text-center">Auction</h3>
+                  <div className="flex flex-wrap justify-center gap-8">
+                    {auctionItems.map((item: any, index: number) => (
+                      <div
+                        key={index}
+                        className="bg-white shadow-lg rounded-lg overflow-hidden w-72 sm:w-80 md:w-96"
+                      >
+                        <img
+                          src={item.imageUrl || "/placeholder.jpg"} // Use a placeholder if no image
+                          alt={item.title}
+                          className="w-full h-64 object-cover"
+                        />
+                        <div className="p-4">
+                          <h4 className="text-xl font-semibold text-black">{item.title}</h4>
+                          <p className="text-black">{item.views} views</p>
+                          <p className="text-lg font-bold mt-2 text-black">
+                            Auction Minimum Price: ${item.price}
+                          </p>
+                          {item.timeLeft && (
+                            <p className="text-sm text-red-500 mt-2">{item.timeLeft}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </>
