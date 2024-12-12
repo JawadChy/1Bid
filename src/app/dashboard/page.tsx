@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ComplaintsTable } from "@/components/complaints-table";
 import { Toaster } from "react-hot-toast";
 import { UserApplicationsTable } from "@/components/user-applications-table";
+import { SuperApplicationsTable } from "@/components/super-applications-table";
 
 export default function DashboardPage() {
   return (
@@ -36,8 +37,10 @@ export default function DashboardPage() {
           
           <TabsContent value="super-applications">
             <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-6">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Super User Applications</h2>
-              <p className="text-gray-500 dark:text-gray-400">No super user applications to display.</p>
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+                Super User Applications
+              </h2>
+              <SuperApplicationsTable />
             </div>
           </TabsContent>
 
