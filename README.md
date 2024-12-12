@@ -51,7 +51,13 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-A bidding website allowing users to bid for various items they need.
+A dynamic online platform that enables users to bid on items and services in 
+real-time auctions. The platform is designed for accessibility and user 
+engagement, allowing users to list item in a transparent and competitive
+bidding process. Features include user-friendly interfaces, secure transactions
+, and various statuses including VIP. Whether you are looking for unique items 
+or services, 1Bid provides a marketplace where users can search, discover, and 
+compete for value.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -116,7 +122,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<!-- USAGE EXAMPLES -->
+<!-- USAGE EXAMPLES 
 ## Usage
 
 Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
@@ -124,6 +130,7 @@ Use this space to show useful examples of how a project can be used. Additional 
 _For more examples, please refer to the [Documentation](https://example.com)_
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+-->
 
 
 <!-- CONTRIBUTING -->
