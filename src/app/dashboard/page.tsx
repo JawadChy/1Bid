@@ -7,6 +7,7 @@ import { ComplaintsTable } from "@/components/complaints-table";
 import { Toaster } from "react-hot-toast";
 import { UserApplicationsTable } from "@/components/user-applications-table";
 import { SuperApplicationsTable } from "@/components/super-applications-table";
+import { SuspendedUsersTable } from "@/components/suspended-users-table";
 
 export default function DashboardPage() {
   return (
@@ -22,10 +23,11 @@ export default function DashboardPage() {
         </h1>
         
         <Tabs defaultValue="complaints" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="complaints">Complaints</TabsTrigger>
             <TabsTrigger value="super-applications">Super User Applications</TabsTrigger>
             <TabsTrigger value="user-applications">User Applications</TabsTrigger>
+            <TabsTrigger value="suspended-users">Suspended Users</TabsTrigger>
           </TabsList>
           
           <TabsContent value="complaints">
@@ -48,6 +50,15 @@ export default function DashboardPage() {
             <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-6">
               <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">User Applications</h2>
               <UserApplicationsTable />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="suspended-users">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-6">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+                Suspended Users
+              </h2>
+              <SuspendedUsersTable />
             </div>
           </TabsContent>
         </Tabs>

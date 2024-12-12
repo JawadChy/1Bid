@@ -4,12 +4,14 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { AuthProvider } from "./auth/auth-context";
 import { Toaster } from "react-hot-toast";
+import { SuspensionCheck } from "@/components/suspension-check";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
 });
+
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
@@ -32,7 +34,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <Providers>{children}</Providers>
+          <Providers>
+            <SuspensionCheck>{children}</SuspensionCheck>
+          </Providers>
           <Toaster position="bottom-center" />
         </AuthProvider>
       </body>
