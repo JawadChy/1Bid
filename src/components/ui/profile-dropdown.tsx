@@ -8,18 +8,21 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Wallet, ChevronDown, Settings, Plus, LogOut, ListIcon, LayoutDashboard } from "lucide-react";
 import { Button } from "./button";
 import Link from "next/link";
+import { useAuth } from '@/app/auth/auth-context';
 
 interface UserProfile {
   id: string;
   first_name: string;
   last_name: string;
   role: string;
+  is_vip: boolean;
 }
 
 interface UserProfileDropdownProps {
@@ -27,6 +30,7 @@ interface UserProfileDropdownProps {
 }
 
 export function ProfileDropdown({ user }: UserProfileDropdownProps) {
+  const { signOut } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const supabase = createClient();
   const router = useRouter();
@@ -36,7 +40,7 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
       try {
         const { data, error } = await supabase
           .from("profile")
-          .select("id, first_name, last_name, role")
+          .select("id, first_name, last_name, role, is_vip")
           .eq("id", user.id)
           .single();
 
@@ -129,6 +133,13 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>
         </DropdownMenuItem>
+
+        {profile?.is_vip && (
+          <>
+            <DropdownMenuLabel>VIP 👑</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

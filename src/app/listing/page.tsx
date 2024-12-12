@@ -732,6 +732,7 @@ export default function ListingPage() {
       {isOwner && isBuyNow && (
         <OfferDialog
           listingId={id!}
+          isOwner={isOwner}
           isOpen={showOfferHistory}
           onClose={() => setShowOfferHistory(false)}
         />

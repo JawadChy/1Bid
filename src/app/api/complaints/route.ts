@@ -20,43 +20,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Create the complaint object
-    const complaintData = {
-      listing_id,
-      complainant_id: user.id,
-      accused_id,
-      content: content.trim(),
-      status: 'PENDING',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    console.log('Attempting to insert:', complaintData);
-
-    // Try the insert with error handling
+    // Create the complaint
     const { data, error: insertError } = await supabase
       .from('complaint')
-      .insert(complaintData)
+      .insert({
+        listing_id,
+        complainant_id: user.id,
+        accused_id,
+        content: content.trim(),
+        status: 'PENDING',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
       .select('*')
       .single();
 
     if (insertError) {
-      // Log specific error properties
-      const errorDetails = {
-        code: insertError.code,
-        message: insertError.message,
-        details: insertError.details,
-        hint: insertError.hint,
-        full: JSON.stringify(insertError)
-      };
-      
-      console.error('Detailed insert error:', errorDetails);
-      
+      console.error('Insert error:', insertError);
       return NextResponse.json({ 
         error: 'Failed to submit complaint',
-        details: errorDetails
+        details: insertError
       }, { status: 500 });
     }
+
+    // Check VIP status of accused user after complaint
+    await supabase.rpc('check_vip_status', {
+      profile_id: accused_id
+    });
 
     return NextResponse.json({ 
       success: true,
@@ -64,17 +54,10 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    const errorDetails = error instanceof Error ? {
-      message: error.message,
-      stack: error.stack,
-      full: JSON.stringify(error)
-    } : error;
-
-    console.error('Unexpected error:', errorDetails);
-    
+    console.error('Unexpected error:', error);
     return NextResponse.json({
       error: 'Failed to submit complaint',
-      details: errorDetails
+      details: error
     }, { status: 500 });
   }
 } 

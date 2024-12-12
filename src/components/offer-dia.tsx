@@ -23,10 +23,12 @@ interface Offer {
 
 export function OfferDialog({ 
   listingId,
+  isOwner,
   isOpen,
   onClose 
 }: { 
   listingId: string;
+  isOwner: boolean;
   isOpen: boolean;
   onClose: () => void;
 }) {
@@ -60,6 +62,31 @@ export function OfferDialog({
       return;
     }
 
+    const { data: listing } = await supabase
+      .from('listing')
+      .select('status, buyer_id')
+      .eq('id', listingId)
+      .single();
+
+    if (listing?.status === 'SOLD') {
+      const { data: transaction } = await supabase
+        .from('transaction')
+        .select('amount')
+        .eq('listing_id', listingId)
+        .eq('type', 'PURCHASE')
+        .single();
+
+      if (transaction) {
+        offerData?.forEach(offer => {
+          if (offer.buyer_id === listing.buyer_id && offer.amount === transaction.amount) {
+            offer.status = 'ACCEPTED';
+          } else if (offer.status === 'PENDING') {
+            offer.status = 'REJECTED';
+          }
+        });
+      }
+    }
+
     setOffers(offerData || []);
   };
 
@@ -69,18 +96,30 @@ export function OfferDialog({
 
   const handleAcceptOffer = async (offerId: string, amount: number) => {
     try {
-      const { error } = await supabase
-        .from('offer')
-        .update({ status: 'ACCEPTED' })
-        .eq('id', offerId);
-  
-      if (error) throw error;
-  
+      const response = await fetch('/api/offers/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          offer_id: offerId,
+          listing_id: listingId,
+          amount
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to accept offer');
+      }
+
       toast.success('Offer accepted successfully');
-      fetchOffers();
+      await fetchOffers();
+      onClose();
+
     } catch (error) {
       console.error('Error accepting offer:', error);
-      toast.error('Failed to accept offer');
+      toast.error(error instanceof Error ? error.message : 'Failed to accept offer');
     }
   };
 
@@ -112,12 +151,21 @@ export function OfferDialog({
                     <p className="text-sm text-gray-500">
                       by {getBuyerName(offer)}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(offer.created_at).toLocaleString()}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-gray-500">
+                        {new Date(offer.created_at).toLocaleString()}
+                      </p>
+                      {offer.status !== 'PENDING' && (
+                        <span className={`text-xs px-2 py-0.5 rounded ${
+                          offer.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {offer.status}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                {offer.status !== 'ACCEPTED' && (
+                {isOwner && offer.status === 'PENDING' && (
                   <Button 
                     onClick={() => setConfirmDialog({
                       isOpen: true,
@@ -140,7 +188,7 @@ export function OfferDialog({
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
         onConfirm={() => handleAcceptOffer(confirmDialog.offerId, confirmDialog.amount)}
         title="Accept Offer"
-        message={`Are you sure you want to accept this offer for $${confirmDialog.amount.toLocaleString()}?`}
+        message={`Are you sure you want to accept this offer for $${confirmDialog.amount.toLocaleString()}? This action cannot be undone and will reject all other offers.`}
         confirmText="Accept Offer"
       />
     </>

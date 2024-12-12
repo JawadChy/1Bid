@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Call the stored procedure
+    // Call the transaction handler
     const { data, error } = await supabase
       .rpc('handle_wallet_transaction', {
         p_user_id: user.id,
@@ -26,6 +26,11 @@ export async function POST(request: NextRequest) {
       }
       throw error;
     }
+
+    // Check VIP status after transaction
+    await supabase.rpc('check_vip_status', {
+      profile_id: user.id
+    });
 
     return NextResponse.json({ 
       balance: data[0].new_balance,
