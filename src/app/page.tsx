@@ -4,36 +4,29 @@ import { motion } from "framer-motion";
 import { AuroraBackground } from "../components/ui/aurora-background";
 import { FlipWords } from "@/components/ui/flip-words";
 import { Navbar } from "@/components/navbar";
-import { TopAuctionCarousel, TopBuyNowCarousel } from "@/components/item-carousels";
+import {
+  TopAuctionCarousel,
+  TopBuyNowCarousel,
+} from "@/components/item-carousels";
 import Link from "next/link";
 
 interface BuyNow {
-  listing_id?: number | null;
-  storage_path?: string | null;
-  title?: string | null;
-  asking_price?: number | null; 
-  viewers?: number | null; 
+  listing_id?: number | null; // Optional, could be a number or null
+  storage_path?: string | null; // Optional, could be a string or null
+  title?: string | null; // Optional, could be a string or null
+  asking_price?: number | null; // Optional, could be a number or null
+  viewers?: number | null; // Optional, could be a number or null
 }
 
 interface BidItem {
-  listing_id?: number | null; 
-  storage_path?: string | null; 
-  title?: string | null; 
-  starting_price?: number | null; 
-  number_of_bids?: number | null; 
-  end_time?: string | null; 
-  viewers?: number | null; 
+  listing_id?: number | null; // Optional, could be a number or null
+  storage_path?: string | null; // Optional, could be a string or null
+  title?: string | null; // Optional, could be a string or null
+  starting_price?: number | null; // Optional, could be a number or null
+  number_of_bids?: number | null; // Optional, could be a number or null
+  end_time?: string | null; // Optional, could be a string or null
+  viewers?: number | null; // Optional, could be a number or null
 }
-
-interface ViewItems {
-  id: string;
-  name: string;
-  listing_type: "BID" | "BUY_NOW";
-  price: number;
-  description?: string;
-
-}
-
 
 export default function Home() {
   // State to hold data for bids and buy-now items
@@ -46,7 +39,6 @@ export default function Home() {
   const [bidItems, setBidItems] = useState<any[]>([]);
   const [frequentViewLoaded, setFrequentViewLoaded] = useState(false);
 
-  
   // Fetch most viewed listings from the API
   useEffect(() => {
     const fetchMostViewedData = async () => {
@@ -112,8 +104,8 @@ export default function Home() {
         console.log("Fetched frequent viewed data:", data);
 
         // Separate items into "BID" and "BUY_NOW"
-        const bids = data.filter((item:ViewItems) => item.listing_type === "BID");
-        const buys = data.filter((item:ViewItems) => item.listing_type === "BUY_NOW");
+        const bids = data.filter((item) => item.listing_type === "BID");
+        const buys = data.filter((item) => item.listing_type === "BUY_NOW");
 
         setBidItems(bids);
         setBuyItems(buys);
@@ -160,7 +152,6 @@ export default function Home() {
           <TopBuyNowCarousel items={buyNowItems} />
         </div>
 
-        
         <div className="py-12 px-4">
           <div className="container mx-auto px-8">
             <div className="flex flex-wrap justify-center gap-8">
@@ -173,18 +164,22 @@ export default function Home() {
                   {/* BID Items */}
                   {bidItems.length > 0 && (
                     <div className="mb-12">
-                      <h3 className="text-2xl font-semibold mb-4">Auction Items</h3>
+                      <h3 className="text-2xl font-semibold mb-4">
+                        Auction Items
+                      </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {bidItems.map((item) => (
                           <div
                             key={item.listing_id}
-                            className="bg-white shadow-md rounded-lg overflow-hidden"
+                            className="bg-slate-100 dark:bg-zinc-950 shadow-md rounded-lg overflow-hidden group"
                           >
-                            <img
-                              src={item.image_url || "/placeholder.jpg"}
-                              alt={item.title}
-                              className="w-full h-56 object-cover"
-                            />
+                            <div className="overflow-hidden">
+                              <img
+                                src={item.image_url || "/placeholder.jpg"}
+                                alt={item.title}
+                                className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-110"
+                              />
+                            </div>
                             <div className="p-4">
                               <h4 className="text-lg font-bold mb-2">
                                 {item.title}
@@ -202,23 +197,29 @@ export default function Home() {
                   {/* BUY_NOW Items */}
                   {buyItems.length > 0 && (
                     <div>
-                      <h3 className="text-2xl font-semibold mb-4">Buy Now Items</h3>
+                      <h3 className="text-2xl font-semibold mb-4">
+                        Buy Now Items
+                      </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {buyItems.map((item) => (
                           <div
                             key={item.listing_id}
-                            className="bg-white shadow-md rounded-lg overflow-hidden"
+                            className="bg-slate-100 dark:bg-zinc-950 shadow-md rounded-lg overflow-hidden group"
                           >
-                            <img
-                              src={item.image_url || "/placeholder.jpg"}
-                              alt={item.title}
-                              className="w-full h-56 object-cover"
-                            />
+                            <div className="overflow-hidden">
+                              <img
+                                src={item.image_url || "/placeholder.jpg"}
+                                alt={item.title}
+                                className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-110"
+                              />
+                            </div>
                             <div className="p-4">
                               <h4 className="text-lg font-bold mb-2">
                                 {item.title}
                               </h4>
-                              <p className="text-sm text-gray-600">Price: ${item.price}</p>
+                              <p className="text-sm text-gray-600">
+                                Price: ${item.price}
+                              </p>
                             </div>
                           </div>
                         ))}
