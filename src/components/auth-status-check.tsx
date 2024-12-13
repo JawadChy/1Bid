@@ -11,8 +11,7 @@ interface AuthStatusCheckProps {
 }
 
 export function AuthStatusCheck({ children }: AuthStatusCheckProps) {
-  const [isSuspended, setIsSuspended] = useState(false);
-  const [isBanned, setIsBanned] = useState(false);
+  const [status, setStatus] = useState<'loading' | 'banned' | 'suspended' | 'active'>('loading');
   const [suspensionCount, setSuspensionCount] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const pathname = usePathname();
@@ -21,51 +20,56 @@ export function AuthStatusCheck({ children }: AuthStatusCheckProps) {
   useEffect(() => {
     const checkStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: banData, error: banError } = await supabase
-        .from('ban')
-        .select('ban_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (banError) {
-        console.error('Ban check error:', banError);
+      if (!user) {
+        setStatus('active');
+        return;
       }
 
-      if (banData) {
-        setIsBanned(true);
-        return; // No need to check suspension if banned
-      }
+      try {
+        // Check both ban and suspension status simultaneously
+        const [banResponse, profileResponse] = await Promise.all([
+          supabase
+            .from('ban')
+            .select('ban_id')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+          supabase
+            .from('profile')
+            .select('is_suspended, suspension_count')
+            .eq('id', user.id)
+            .single()
+        ]);
 
-      // Check suspension status
-      const { data: profile, error: profileError } = await supabase
-        .from('profile')
-        .select('is_suspended, suspension_count')
-        .eq('id', user.id)
-        .single();
+        if (banResponse.data) {
+          setStatus('banned');
+          return;
+        }
 
-      if (profileError) {
-        console.error('Profile check error:', profileError);
-      }
-
-      if (profile) {
-        setIsSuspended(profile.is_suspended);
-        setSuspensionCount(profile.suspension_count);
-        setUserId(user.id);
+        if (profileResponse.data?.is_suspended) {
+          setStatus('suspended');
+          setSuspensionCount(profileResponse.data.suspension_count);
+          setUserId(user.id);
+        } else {
+          setStatus('active');
+        }
+      } catch (error) {
+        console.error('Status check error:', error);
+        setStatus('active'); // Fallback to active on error
       }
     };
 
     checkStatus();
   }, []);
 
-  // Show ban page if user is banned
-  if (isBanned) {
+  if (status === 'loading') {
+    return null; // Or loading spinner
+  }
+
+  if (status === 'banned') {
     return <BannedPage />;
   }
 
-  // Show suspension page if user is suspended (except on wallet page)
-  if (isSuspended && userId && pathname !== '/wallet') {
+  if (status === 'suspended' && pathname !== '/wallet') {
     return <SuspendedUserView suspensionCount={suspensionCount} userId={userId} />;
   }
 

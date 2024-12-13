@@ -24,9 +24,6 @@ import {
 } from "@/components/ui/select";
 
 export const Navbar = ({ animated = true }: { animated?: boolean }) => {
-  {
-    /* add some other shit here too, i'm not good at being creative */
-  }
   const searchWords = ["anything!", "goods", "services"];
   const [currentSearchWord, setCurrentSearchWord] = useState(0);
 
