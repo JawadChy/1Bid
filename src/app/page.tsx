@@ -8,21 +8,30 @@ import { TopAuctionCarousel, TopBuyNowCarousel } from "@/components/item-carouse
 import Link from "next/link";
 
 interface BuyNow {
-  listing_id?: number | null; // Optional, could be a number or null
-  storage_path?: string | null; // Optional, could be a string or null
-  title?: string | null; // Optional, could be a string or null
-  asking_price?: number | null; // Optional, could be a number or null
-  viewers?: number | null; // Optional, could be a number or null
+  listing_id?: number | null;
+  storage_path?: string | null;
+  title?: string | null;
+  asking_price?: number | null; 
+  viewers?: number | null; 
 }
 
 interface BidItem {
-  listing_id?: number | null; // Optional, could be a number or null
-  storage_path?: string | null; // Optional, could be a string or null
-  title?: string | null; // Optional, could be a string or null
-  starting_price?: number | null; // Optional, could be a number or null
-  number_of_bids?: number | null; // Optional, could be a number or null
-  end_time?: string | null; // Optional, could be a string or null
-  viewers?: number | null; // Optional, could be a number or null
+  listing_id?: number | null; 
+  storage_path?: string | null; 
+  title?: string | null; 
+  starting_price?: number | null; 
+  number_of_bids?: number | null; 
+  end_time?: string | null; 
+  viewers?: number | null; 
+}
+
+interface ViewItems {
+  id: string;
+  name: string;
+  listing_type: "BID" | "BUY_NOW";
+  price: number;
+  description?: string;
+
 }
 
 
@@ -103,8 +112,8 @@ export default function Home() {
         console.log("Fetched frequent viewed data:", data);
 
         // Separate items into "BID" and "BUY_NOW"
-        const bids = data.filter((item) => item.listing_type === "BID");
-        const buys = data.filter((item) => item.listing_type === "BUY_NOW");
+        const bids = data.filter((item:ViewItems) => item.listing_type === "BID");
+        const buys = data.filter((item:ViewItems) => item.listing_type === "BUY_NOW");
 
         setBidItems(bids);
         setBuyItems(buys);
