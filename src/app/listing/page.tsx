@@ -44,6 +44,7 @@ interface ListingData {
   seller_rating?: number;
   buyer_rating?: number;
   isOwner: boolean;
+  isVip?: boolean;
 }
 
 export default function ListingPage() {
@@ -67,6 +68,28 @@ export default function ListingPage() {
   const [selectedRating, setSelectedRating] = useState<number>(5);
   const [showRatingConfirm, setShowRatingConfirm] = useState(false);
   const [showComplaintDialog, setShowComplaintDialog] = useState(false);
+  const [isVip, setIsVip] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkVipStatus = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: profile, error } = await supabase
+          .from('profile')
+          .select('is_vip')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+        setIsVip(profile?.is_vip || false);
+      } catch (error) {
+        console.error('Error checking VIP status:', error);
+      }
+    };
+
+    checkVipStatus();
+  }, [user]);
 
   useEffect(() => {
     if (!id || hasLoggedViewRef.current) return; // Prevent duplicate calls with useRef because Next.js rerenders 
@@ -408,6 +431,15 @@ export default function ListingPage() {
         }}
       />
       <Navbar />
+      {isVip && (
+        <div className="mt-20 max-w-7xl mx-auto px-4 mb-6">
+          <div className="bg-gradient-to-r from-amber-100 to-amber-200 dark:from-amber-900/50 dark:to-amber-800/50 rounded-lg p-4 flex items-center justify-center">
+            <span className="text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
+              Enjoy 10% Off All Purchases As VIP! 👑
+            </span>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 mt-24">
         {loading ? (
           <div className="animate-pulse">
@@ -560,21 +592,25 @@ export default function ListingPage() {
                     {!isOwner && listingData.status === 'ACTIVE' && (
                       <div className="space-y-4 mt-6">
                         {isAuction && (
-                          <RainbowButton
-                            onClick={handleBidSubmit}
-                            className="w-full py-6"
-                          >
-                            Place Bid
-                          </RainbowButton>
+                          <>
+                            <RainbowButton
+                              onClick={handleBidSubmit}
+                              className="w-full py-6"
+                            >
+                              Place Bid
+                            </RainbowButton>
+                          </>
                         )}
 
                         {isBuyNow && (
-                          <RainbowButton
-                            onClick={handleOfferSubmit}
-                            className="w-full py-6"
-                          >
-                            Make Offer
-                          </RainbowButton>
+                          <>
+                            <RainbowButton
+                              onClick={handleOfferSubmit}
+                              className="w-full py-6"
+                            >
+                              Make Offer
+                            </RainbowButton>
+                          </>
                         )}
                       </div>
                     )}
@@ -706,7 +742,7 @@ export default function ListingPage() {
                     isOpen={showComplaintDialog}
                     onClose={() => setShowComplaintDialog(false)}
                     listingId={id}
-                    accusedId={user?.id === listingData.buyer_id ? listingData.seller_id : listingData.buyer_id}
+                    accusedId={listingData.buyer_id || listingData.seller_id || ''}
                   />
                 )}
               </div>

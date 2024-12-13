@@ -8,11 +8,15 @@ import { createClient } from "@/lib/supabase/client";
 interface ComplaintDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  listingId: string;
-  accusedId: string;
+  listingId?: string;
+  accusedId?: string;
 }
 
 export function ComplaintDialog({ isOpen, onClose, listingId, accusedId }: ComplaintDialogProps) {
+  if (!listingId || !accusedId) {
+    return null;
+  }
+
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingComplaint, setExistingComplaint] = useState(false);

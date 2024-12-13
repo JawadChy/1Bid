@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Wallet, ChevronDown, Settings, Plus, LogOut, ListIcon, LayoutDashboard } from "lucide-react";
+import { Wallet, ChevronDown, Settings, Plus, LogOut, ListIcon, LayoutDashboard, Crown } from "lucide-react";
 import { Button } from "./button";
 import Link from "next/link";
 import { useAuth } from '@/app/auth/auth-context';
@@ -89,6 +89,16 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
             </span>
           </div>
         </div>
+
+        {profile?.is_vip && (
+          <div className="px-2 py-1.5 mx-2 my-1 rounded-md bg-amber-50 dark:bg-amber-950/30">
+            <span className="flex items-center gap-2 text-sm font-medium text-amber-900 dark:text-amber-100">
+              <Crown className="h-4 w-4 text-amber-500" />
+              VIP Member
+            </span>
+          </div>
+        )}
+
         <DropdownMenuSeparator />
 
         <Link href="/createlisting">
@@ -135,13 +145,6 @@ export function ProfileDropdown({ user }: UserProfileDropdownProps) {
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>
         </DropdownMenuItem>
-
-        {profile?.is_vip && (
-          <>
-            <DropdownMenuLabel>VIP 👑</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
